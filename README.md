@@ -50,7 +50,7 @@ This is source-available, not a standard open-source commercial-use license. See
 ### Installation with Docker (recommended)
 
 ```bash
-git clone https://github.com/<your-account-or-org>/adhan-pager.git
+git clone https://github.com/abdlmalekluttee/adhan-pager.git
 cd adhan-pager
 ./scripts/preflight.sh
 docker compose up -d --build
@@ -69,7 +69,7 @@ Before deployment, run:
 If you want one copy-paste command for both validation and deployment:
 
 ```bash
-git clone https://github.com/<your-account-or-org>/adhan-pager.git && cd adhan-pager && ./scripts/preflight.sh && docker compose up -d --build
+git clone https://github.com/abdlmalekluttee/adhan-pager.git && cd adhan-pager && ./scripts/preflight.sh && docker compose up -d --build
 ```
 
 Then open:
@@ -164,7 +164,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8080
 ### التثبيت عبر Docker
 
 ```bash
-git clone https://github.com/<your-account-or-org>/adhan-pager.git
+git clone https://github.com/abdlmalekluttee/adhan-pager.git
 cd adhan-pager
 ./scripts/preflight.sh
 docker compose up -d --build
@@ -183,7 +183,7 @@ docker compose up -d --build
 وإذا أردت أمراً واحداً للنسخ واللصق للتحقق ثم التشغيل:
 
 ```bash
-git clone https://github.com/<your-account-or-org>/adhan-pager.git && cd adhan-pager && ./scripts/preflight.sh && docker compose up -d --build
+git clone https://github.com/abdlmalekluttee/adhan-pager.git && cd adhan-pager && ./scripts/preflight.sh && docker compose up -d --build
 ```
 
 بعد ذلك افتح:
