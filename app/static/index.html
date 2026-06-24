@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Adhan Pager · Control</title>
+<link rel="stylesheet" href="/static/fi/css/flag-icons.min.css" />
+<style>
+  :root{
+    --night:#0c1f1c; --night-2:#0f2a26; --panel:#14322d; --panel-2:#1a3c36;
+    --line:#27514a; --ink:#eaf3ef; --muted:#8fb3aa; --dim:#5f8a80;
+    --brass:#c9a24b; --brass-2:#e3c27e; --good:#52c08a; --bad:#e06b6b; --warn:#e0b357;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--night);color:var(--ink);font-family:var(--sans);
+       font-size:14px;line-height:1.5}
+  a{color:var(--brass-2)}
+  .app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+  /* ---- rail ---- */
+  .rail{background:var(--night-2);border-right:1px solid var(--line);
+        display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .brand{padding:20px 18px 16px;border-bottom:1px solid var(--line)}
+  .brand b{font-size:16px;letter-spacing:.02em;display:block}
+  .brand span{color:var(--brass);font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+  .nav{padding:10px 8px;flex:1;overflow:auto}
+  .nav button{width:100%;text-align:left;background:none;border:none;color:var(--muted);
+    padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;display:flex;gap:10px;align-items:center;font-family:var(--sans)}
+  .nav button:hover{color:var(--ink);background:#ffffff08}
+  .nav button.active{color:var(--night);background:var(--brass);font-weight:600}
+  .nav .ico{width:18px;text-align:center;opacity:.9}
+  .rail-foot{padding:12px 16px;border-top:1px solid var(--line);font-family:var(--mono);
+             font-size:11px;color:var(--dim)}
+  /* ---- main ---- */
+  main{padding:0 0 60px}
+  .topbar{display:flex;align-items:center;gap:18px;padding:16px 28px;
+          border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--night);z-index:5}
+  .clock{font-family:var(--mono);font-size:22px;color:var(--brass-2);letter-spacing:.04em}
+  .clock small{display:block;font-size:10px;color:var(--dim);letter-spacing:.16em;text-transform:uppercase}
+  .pills{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:11.5px;padding:5px 11px;border-radius:999px;
+        border:1px solid var(--line);display:flex;align-items:center;gap:7px;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .dot.good{background:var(--good);box-shadow:0 0 8px #52c08a88}
+  .dot.bad{background:var(--bad)}
+  .dot.warn{background:var(--warn)}
+  .wrap{padding:26px 28px;max-width:980px}
+  .panel{display:none}.panel.active{display:block}
+  h2{font-size:20px;margin:0 0 4px;font-weight:600}
+  .sub{color:var(--muted);margin:0 0 22px;font-size:13px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+        padding:20px 22px;margin-bottom:18px}
+  .card h3{margin:0 0 16px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--brass)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 18px}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px;letter-spacing:.02em}
+  input,select{width:100%;background:var(--night-2);border:1px solid var(--line);color:var(--ink);
+    padding:9px 11px;border-radius:8px;font-family:var(--mono);font-size:13px}
+  input:focus,select:focus{outline:none;border-color:var(--brass)}
+  input[type=checkbox]{width:auto}
+  .row{display:flex;align-items:center;gap:10px}
+  .btn{background:var(--brass);color:#1a1206;border:none;padding:10px 18px;border-radius:9px;
+    font-weight:600;cursor:pointer;font-size:13px;font-family:var(--sans)}
+  .btn:hover{background:var(--brass-2)}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--ink)}
+  .btn.ghost:hover{border-color:var(--brass);color:var(--brass-2)}
+  .btn.danger{background:none;border:1px solid #6b2f2f;color:var(--bad)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .actions{display:flex;gap:10px;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  td.mono,.mono{font-family:var(--mono)}
+  /* ---- dashboard hero ---- */
+  .hero{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+  .next{flex:1;min-width:240px}
+  .next .lab{color:var(--brass);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+  .next .nm{font-size:34px;font-weight:600;margin:4px 0 2px}
+  .next .nm .ar{font-family:var(--mono);color:var(--muted);font-size:20px;margin-left:10px}
+  .next .cd{font-family:var(--mono);font-size:15px;color:var(--brass-2)}
+  .timeline{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .slot{background:var(--night-2);border:1px solid var(--line);border-radius:10px;
+        padding:11px 13px;min-width:96px;flex:1}
+  .slot.now{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass) inset}
+  .slot.off{opacity:.45}
+  .slot .p{font-size:12px;color:var(--muted)}
+  .slot .t{font-family:var(--mono);font-size:18px;margin-top:3px}
+  .slot .ar{font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .hint{font-size:11.5px;color:var(--dim);margin-top:4px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--panel-2);border:1px solid var(--brass);color:var(--ink);padding:12px 20px;
+    border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:50;font-size:13px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{border-color:var(--bad)}
+  .banner{background:#3a2a14;border:1px solid var(--brass);color:var(--brass-2);
+    padding:10px 14px;border-radius:10px;margin-bottom:18px;font-size:12.5px}
+  .codecrow{display:grid;grid-template-columns:1fr 90px 1fr;align-items:center;gap:12px;margin-bottom:10px}
+  .codecrow input[type=range]{width:100%}
+  .badge{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid var(--line)}
+  .badge.on{color:var(--good);border-color:#2f5a45}
+  .badge.off{color:var(--dim)}
+  @media(max-width:760px){.app{grid-template-columns:1fr}.rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap}.nav{display:flex;flex-wrap:wrap}}
+
+  /* ---- light theme ---- */
+  [data-theme="light"]{
+    --night:#f3f1ea; --night-2:#ffffff; --panel:#ffffff; --panel-2:#f6f3ea;
+    --line:#dcd6c4; --ink:#1f2a26; --muted:#5f6f68; --dim:#8a9a92;
+    --brass:#b07d1a; --brass-2:#8a6310; --good:#1f9d63; --bad:#c2433f; --warn:#b9831f;
+  }
+  [data-theme="light"] body{background:var(--night)}
+  [data-theme="light"] .btn{color:#fff}
+  [data-theme="light"] .nav button.active{color:#fff}
+  [data-theme="light"] .banner{background:#fbf3df}
+  /* ---- RTL ---- */
+  [dir="rtl"] .nav button{text-align:right}
+  [dir="rtl"] th,[dir="rtl"] td{text-align:right}
+  [dir="rtl"] label{letter-spacing:0}
+  [dir="rtl"] .rail{border-right:none;border-left:1px solid var(--line)}
+  [dir="rtl"] .next .nm .ar{margin-left:0;margin-right:10px}
+  [dir="rtl"] .pills{margin-left:0;margin-right:auto}
+  /* keep technical values LTR; let Arabic text/selects stay RTL */
+  [dir="rtl"] .mono,[dir="rtl"] .clock,[dir="rtl"] .logbox,[dir="rtl"] .kv .k + *,
+  [dir="rtl"] input[type=number],[dir="rtl"] .ltr,[dir="rtl"] input.ltr,[dir="rtl"] select.ltr,
+  [dir="rtl"] .technical,[dir="rtl"] .number-field{direction:ltr;text-align:left}
+  /* ---- topbar controls ---- */
+  .tbctl{display:flex;gap:8px;align-items:center}
+  .tbctl select{width:auto;font-family:var(--sans);font-size:12px;padding:6px 8px}
+  .clock .date{font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:none;margin-top:2px}
+  .pill.click{cursor:pointer}
+  .pill.click:hover{border-color:var(--brass)}
+  /* ---- active call ---- */
+  .callcard{background:linear-gradient(180deg,#16382f,#123029);border:1px solid var(--brass);
+    border-radius:14px;padding:16px 20px;margin-bottom:18px;display:none}
+  [data-theme="light"] .callcard{background:#fbf3df}
+  .callcard.live{display:block;animation:pulseb 2s infinite}
+  @keyframes pulseb{0%,100%{box-shadow:0 0 0 0 #c9a24b33}50%{box-shadow:0 0 0 4px #c9a24b22}}
+  .callcard .ttl{color:var(--brass);font-size:11px;letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+  .callcard .big{font-size:22px;font-weight:600;margin:6px 0}
+  .callgrid{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-top:8px}
+  .callgrid div span{display:block;color:var(--dim);font-size:11px;font-family:var(--sans);text-transform:uppercase;letter-spacing:.06em}
+  .progress{height:6px;background:var(--night-2);border-radius:4px;overflow:hidden;margin-top:12px}
+  .progress > i{display:block;height:100%;background:var(--brass);width:0%}
+  .livedot{width:9px;height:9px;border-radius:50%;background:var(--bad);animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  /* ---- logs ---- */
+  .logbox{background:#091713;border:1px solid var(--line);border-radius:10px;padding:12px;
+    font-family:var(--mono);font-size:12px;line-height:1.5;height:440px;overflow:auto;white-space:pre-wrap;color:#cfe5dd}
+  [data-theme="light"] .logbox{background:#0c1f1c;color:#cfe5dd}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-family:var(--mono);font-size:12.5px}
+  .kv .k{color:var(--dim)}
+
+  /* ---- focus visibility (a11y) ---- */
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
+    outline:2px solid var(--brass-2);outline-offset:2px}
+  /* ---- responsive table wrapper ---- */
+  .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-wrap table{min-width:480px}
+  /* ---- validation ---- */
+  input.invalid,select.invalid{border-color:var(--bad);background:#3a1c1c33}
+  [data-theme="light"] input.invalid,[data-theme="light"] select.invalid{background:#fbeaea}
+  .errmsg{color:var(--bad);font-size:11.5px;margin-top:4px;display:flex;gap:5px;align-items:flex-start}
+  .errmsg::before{content:"⚠";font-size:11px;line-height:1.3}
+  .warnmsg{color:var(--warn);font-size:11.5px;margin-top:4px}
+  /* ---- dirty / unsaved ---- */
+  .btn.dirty{box-shadow:0 0 0 2px var(--warn);position:relative}
+  .savewrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .dirtytag{display:none;font-size:11.5px;color:var(--warn);font-family:var(--mono)}
+  .dirtytag.show{display:inline}
+  .unsaved{display:none;align-items:center;gap:6px;font-size:11.5px;color:var(--warn);
+    border:1px solid var(--warn);border-radius:999px;padding:4px 11px;font-family:var(--mono)}
+  .unsaved.show{display:inline-flex}
+  .nav button .ndot{margin-inline-start:auto;width:7px;height:7px;border-radius:50%;background:var(--warn);display:none}
+  .nav button.hasdirty .ndot{display:inline-block}
+  /* ---- buttons loading ---- */
+  .btn .spin{display:inline-block;width:12px;height:12px;border:2px solid #ffffff66;border-top-color:#fff;
+    border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-inline-end:6px}
+  [data-theme="light"] .btn .spin{border-color:#0003;border-top-color:#000}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* ---- upload progress ---- */
+  .uprog{margin-top:10px;display:none}
+  .uprog.show{display:block}
+  .uprog .bar{height:8px;background:var(--night-2);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .uprog .bar > i{display:block;height:100%;width:0%;background:var(--brass);transition:width .15s}
+  .uprog .lab{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between}
+  .uprog.err .bar > i{background:var(--bad)} .uprog.err .lab{color:var(--bad)}
+  .uprog.ok .bar > i{background:var(--good)} .uprog.ok .lab{color:var(--good)}
+  /* ---- modal ---- */
+  .modal{position:fixed;inset:0;background:#0008;backdrop-filter:blur(2px);display:none;
+    align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal.show{display:flex}
+  .modal-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    max-width:440px;width:100%;padding:22px;box-shadow:0 20px 60px #0006}
+  .modal-card.danger{border-color:var(--bad)}
+  .modal-card h3{margin:0 0 10px;font-size:16px;color:var(--ink);text-transform:none;letter-spacing:0}
+  .modal-card p{margin:0 0 8px;color:var(--muted);font-size:13.5px}
+  .modal-detail{background:var(--night-2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    margin:12px 0;font-family:var(--mono);font-size:12.5px;display:grid;grid-template-columns:auto 1fr;gap:5px 12px}
+  .modal-detail .k{color:var(--dim)}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  /* ---- boot error overlay ---- */
+  .booterr{position:fixed;inset:0;background:var(--night);display:none;align-items:center;justify-content:center;z-index:200;padding:24px}
+  .booterr.show{display:flex}
+  .booterr .box{max-width:480px;text-align:center}
+  .booterr h2{color:var(--bad)}
+  .booterr .det{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--panel);
+    border:1px solid var(--line);border-radius:9px;padding:12px;margin:14px 0;word-break:break-word;text-align:left}
+  /* ---- dashboard health ---- */
+  .health{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .hcell{background:var(--night-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;display:flex;gap:10px;align-items:flex-start}
+  .hcell .hd{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none;background:var(--dim)}
+  .hcell .hd.good{background:var(--good)} .hcell .hd.bad{background:var(--bad)} .hcell .hd.warn{background:var(--warn)}
+  .hcell .ht{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+  .hcell .hv{font-family:var(--mono);font-size:13px;margin-top:2px}
+  /* ---- empty states ---- */
+  .empty{color:var(--muted);font-size:13px;background:var(--night-2);border:1px dashed var(--line);
+    border-radius:10px;padding:16px;text-align:center}
+  /* ---- logs toolbar ---- */
+  .logtools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .logtools select{width:auto;font-family:var(--sans);font-size:12px;padding:7px 9px}
+  .callfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+  .callfoot .hint{margin:0}
+  .slot .picon,.ptbl .picon{font-size:13px;margin-inline-end:6px;opacity:.95}
+  .banner.stale{background:#3a2a14;border-color:var(--warn);color:var(--warn)}
+  [dir="rtl"] .callfoot{flex-direction:row-reverse}
+  /* ---- combobox (country/city picker) ---- */
+  .combo{position:relative}
+  .combo-list{position:absolute;z-index:40;top:100%;inset-inline:0;margin-top:4px;max-height:280px;overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px #0005;display:none}
+  .combo-list.show{display:block}
+  .combo-item{padding:9px 12px;cursor:pointer;display:flex;gap:10px;align-items:center;font-size:13px;border-bottom:1px solid var(--line)}
+  .combo-item:last-child{border-bottom:none}
+  .combo-item:hover,.combo-item.active{background:var(--panel-2)}
+  .combo-item .nm{flex:1}
+  .combo-item .meta{color:var(--dim);font-size:11px;font-family:var(--mono)}
+  .combo-item .flag{font-size:18px;line-height:1}
+  .combo-item .fi{font-size:15px;border-radius:2px;box-shadow:0 0 0 1px #0002}
+  .loc-summary .fi{font-size:22px;border-radius:3px;box-shadow:0 0 0 1px #0002;vertical-align:-3px}
+  .combo-empty{padding:10px 12px;color:var(--muted);font-size:12.5px}
+  .loc-summary{background:var(--night-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:6px 0 2px}
+  .loc-summary .row1{font-size:15px;font-weight:600;display:flex;gap:8px;align-items:center}
+  .loc-summary .kv2{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;margin-top:8px;font-family:var(--mono);font-size:12px}
+  .loc-summary .kv2 .k{color:var(--dim)}
+  .rec-banner{background:#16302a;border:1px solid var(--brass);border-radius:10px;padding:11px 14px;margin-top:10px;
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}
+  [data-theme="light"] .rec-banner{background:#f6efdd}
+  .rec-banner .acts{display:flex;gap:8px;margin-inline-start:auto}
+  .adv-toggle{color:var(--brass);cursor:pointer;font-size:12.5px;user-select:none;margin-top:6px;display:inline-block}
+  .sel-pill{display:inline-flex;align-items:center;gap:8px;background:var(--night-2);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px;margin:2px 0 6px;font-size:13px;font-weight:600}
+  .sel-pill .fi{font-size:16px;border-radius:2px;box-shadow:0 0 0 1px #0002}
+  input:disabled{opacity:.5;cursor:not-allowed}
+  input.ro{opacity:.7;cursor:default;background:var(--night-2)}
+  @media(max-width:760px){
+    .wrap{padding:18px 14px}
+    .topbar{flex-wrap:wrap;gap:10px;padding:12px 14px}
+    .pills{width:100%;order:3}
+    .grid{grid-template-columns:1fr}
+    .callgrid{gap:14px}
+    .codecrow{grid-template-columns:1fr;gap:6px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="brand"><b>Adhan Pager</b><span>SIP · paging</span></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="rail-foot" id="foot">v1.0</div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div class="clock"><span id="clock">--:--:--</span><small id="tzlabel">—</small><span class="date" id="dateline">—</span></div>
+      <span class="unsaved" id="unsaved" role="status"><span>●</span><span data-i18n="Unsaved changes">Unsaved changes</span></span>
+      <button class="btn ghost" id="btnDiscard" style="display:none;padding:6px 12px;font-size:12px" data-i18n="Discard changes">Discard changes</button>
+      <div class="pills" id="pills"></div>
+      <div class="tbctl">
+        <select id="langSel" title="Language">
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+        </select>
+        <select id="themeSel" title="Theme">
+          <option value="auto" data-i18n="◐ Auto">◐ Auto</option>
+          <option value="dark" data-i18n="🌙 Dark">🌙 Dark</option>
+          <option value="light" data-i18n="☀ Light">☀ Light</option>
+        </select>
+      </div>
+    </div>
+    <div class="wrap">
+      <!-- DASHBOARD -->
+      <section class="panel active" data-tab="dashboard">
+        <h2 data-i18n="Dashboard">Dashboard</h2>
+        <p class="sub" data-i18n="Live status of the call-to-prayer paging service.">Live status of the call-to-prayer paging service.</p>
+        <div id="dashBanner"></div>
+        <div class="card"><h3 data-i18n="System health">System health</h3>
+          <div class="health" id="healthGrid"></div>
+          <div class="hint" id="lastUpdated" style="margin-top:10px">—</div>
+        </div>
+        <div class="callcard" id="callCard">
+          <div class="ttl"><span class="livedot"></span><span data-i18n="On the line now">On the line now</span></div>
+          <div class="big" id="callLabel">—</div>
+          <div class="callgrid">
+            <div><span data-i18n="Destinations">Destinations</span><b id="callDest">—</b></div>
+            <div><span data-i18n="Codec">Codec</span><b id="callCodec">—</b></div>
+            <div><span data-i18n="Elapsed">Elapsed</span><b id="callElapsed">—</b></div>
+            <div><span data-i18n="Remaining">Remaining</span><b id="callRemain">—</b></div>
+          </div>
+          <div class="progress"><i id="callBar"></i></div>
+          <div class="callfoot">
+            <span class="hint" id="callUpdated"></span>
+            <button class="btn danger" id="btnStopCall" style="display:none">⏹ <span data-i18n="Stop current page">Stop current page</span></button>
+          </div>
+        </div>
+        <div class="card"><div class="hero">
+          <div class="next">
+            <div class="lab" data-i18n="Next page">Next page</div>
+            <div class="nm" id="nextName">—</div>
+            <div class="cd" id="nextCd">—</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn" id="btnTest" data-i18n="▶ Test page now">▶ Test page now</button>
+            <select id="testPrayer" style="font-size:12px"></select>
+            <div class="hint" data-i18n="Dials enabled destinations and plays the assigned audio.">Dials enabled destinations and plays the assigned audio.</div>
+          </div>
+        </div>
+        <div class="timeline" id="timeline"></div>
+        </div>
+        <div class="card"><h3 data-i18n="Last page">Last page</h3><div id="lastPage" class="mono small muted">No page yet.</div></div>
+      </section>
+
+      <!-- SERVER / REGISTRATION -->
+      <section class="panel" data-tab="server">
+        <h2 data-i18n="SIP Registration">SIP Registration</h2>
+        <p class="sub" data-i18n="SIP account this unit registers as on your PBX / registrar.">SIP account this unit registers as on your PBX / registrar.</p>
+        <div class="card"><h3 data-i18n="SIP account">SIP account</h3>
+          <div class="grid" id="sipForm"></div>
+          <div class="actions"><button class="btn" data-save="sip" data-i18n="Save & reconnect">Save &amp; reconnect</button>
+            <button class="btn ghost" id="btnReconnect" data-i18n="Reconnect now">Reconnect now</button></div>
+        </div>
+      </section>
+
+      <!-- DESTINATIONS -->
+      <section class="panel" data-tab="destinations">
+        <h2 data-i18n="Paging targets">Paging destinations</h2>
+        <p class="sub" data-i18n="Extensions, paging groups, or multicast numbers to call.">Extensions, paging groups, or multicast numbers to call.</p>
+        <div class="card"><h3 data-i18n="Destinations">Destinations</h3>
+          <div id="destWarn"></div>
+          <div class="table-wrap"><table><thead><tr><th data-i18n="Name">Name</th><th data-i18n="Extension / URI">Extension / URI</th><th data-i18n="On">On</th><th></th></tr></thead>
+            <tbody id="destBody"></tbody></table></div>
+          <div class="actions"><button class="btn ghost" id="btnAddDest" data-i18n="+ Add destination">+ Add destination</button>
+            <button class="btn" data-save="destinations" data-i18n="Save destinations">Save destinations</button></div>
+        </div>
+        <div class="card"><h3 data-i18n="Call behaviour">Call behaviour</h3>
+          <div class="grid" id="callForm"></div>
+          <div class="actions"><button class="btn" data-save="call" data-i18n="Save call behaviour">Save call behaviour</button></div>
+        </div>
+      </section>
+
+      <!-- SCHEDULE -->
+      <section class="panel" data-tab="schedule">
+        <h2 data-i18n="Prayer schedule">Prayer schedule</h2>
+        <p class="sub" data-i18n="Calculation method and which prayers to page.">Calculation method and which prayers to page.</p>
+        <div class="card"><h3 data-i18n="Time source">Time source</h3>
+          <div class="grid" id="sourceForm"></div>
+          <div id="manualBox" style="margin-top:12px">
+            <div class="actions" style="margin-bottom:8px">
+              <input type="file" id="ttInput" accept=".txt,.csv" style="font-family:var(--sans)" aria-label="Timetable file to import">
+              <button class="btn" id="btnImportTt" data-i18n="Import timetable">Import timetable</button>
+            </div>
+            <div class="uprog" id="ttProg"><div class="bar"><i></i></div><div class="lab"><span class="st" data-i18n="Ready">Ready</span><span class="pct"></span></div></div>
+            <div class="mono small muted" id="ttStatus">—</div>
+            <p class="sub" style="margin-top:8px" id="ttFormatHelp">File format: repeating blocks of <span class="mono ltr">Date : YYYY-MM-DD</span> then
+              <span class="mono ltr">Fajr/Dhuhr/Asr/Maghrib/Isha : HH:MM:SS</span>. A blank time skips that prayer. Times repeat every year by month-day.</p>
+          </div>
+        </div>
+        <div class="card"><h3 data-i18n="Calculation">Calculation</h3>
+          <div class="grid" id="calcForm"></div>
+        </div>
+        <div class="card"><h3 data-i18n="Prayers & fine-tuning">Prayers &amp; fine-tuning</h3>
+          <div class="table-wrap"><table><thead><tr><th data-i18n="Prayer">Prayer</th><th data-i18n="Today">Today</th><th data-i18n="Adjust (min)">Adjust (min)</th><th data-i18n="Adhan on">Adhan on</th><th data-i18n="Iqama on">Iqama on</th></tr></thead>
+            <tbody id="prayerBody"></tbody></table></div>
+        </div>
+        <div class="card"><h3 data-i18n="Iqama (optional second page)">Iqama (optional second page)</h3>
+          <div class="grid" id="iqamaForm"></div>
+        </div>
+        <div class="actions"><button class="btn" data-save="prayer" data-i18n="Save schedule">Save schedule</button></div>
+      </section>
+
+      <!-- AUDIO -->
+      <section class="panel" data-tab="audio">
+        <h2 data-i18n="Audio & files">Audio &amp; files</h2>
+        <p class="sub" data-i18n="Adhan recordings and which one plays for each prayer.">Adhan recordings and which one plays for each prayer.</p>
+        <div id="ffmpegBanner"></div>
+        <div class="card"><h3 data-i18n="Library">Library</h3>
+          <div class="actions" style="margin-bottom:14px">
+            <input type="file" id="fileInput" accept=".wav,.mp3,.m4a,.aac,.ogg,.flac,.opus" style="font-family:var(--sans)" aria-label="Audio file to upload">
+            <button class="btn" id="btnUpload" data-i18n="Upload">Upload</button>
+          </div>
+          <div class="uprog" id="audioProg"><div class="bar"><i></i></div><div class="lab"><span class="st" data-i18n="Ready">Ready</span><span class="pct"></span></div></div>
+          <div class="table-wrap"><table><thead><tr><th data-i18n="File">File</th><th data-i18n="Length">Length</th><th data-i18n="Format">Format</th><th></th></tr></thead>
+            <tbody id="audioBody"></tbody></table></div>
+        </div>
+        <div class="card"><h3 data-i18n="Assignment">Assignment</h3>
+          <div class="grid" id="assignForm"></div>
+          <div class="actions"><button class="btn" data-save="audio" data-i18n="Save audio settings">Save audio settings</button></div>
+        </div>
+      </section>
+
+      <!-- CODECS -->
+      <section class="panel" data-tab="codecs">
+        <h2 data-i18n="Codecs">Codecs</h2>
+        <p class="sub" data-i18n="Priority offered during call setup. 0 disables a codec. Higher = preferred.">Priority offered during call setup. 0 disables a codec. Higher = preferred.</p>
+        <div class="card"><h3 data-i18n="Priorities">Priorities</h3>
+          <div id="codecForm"></div>
+          <div class="actions"><button class="btn" data-save="codecs" data-i18n="Save & reconnect">Save &amp; reconnect</button></div>
+          <div class="hint" id="codecHelp">G722 gives wideband (16 kHz) audio if your PBX and speakers support it; G.711 (PCMA/PCMU) is universal.</div>
+        </div>
+      </section>
+
+      <!-- LOCATION -->
+      <section class="panel" data-tab="location">
+        <h2 data-i18n="Location">Location</h2>
+        <p class="sub" data-i18n="Used for astronomical prayer-time calculation.">Used for astronomical prayer-time calculation.</p>
+        <div class="card"><h3 data-i18n="Coordinates">Coordinates</h3>
+          <div class="grid" id="locForm"></div>
+          <div class="actions"><button class="btn" data-save="location" data-i18n="Save location">Save location</button>
+            <button class="btn" id="btnSaveLocMethod" style="display:none" data-i18n="Save location and calculation method">Save location and calculation method</button></div>
+        </div>
+      </section>
+
+      <!-- NTP -->
+      <section class="panel" data-tab="ntp">
+        <h2 data-i18n="Time & NTP">Time &amp; NTP</h2>
+        <p class="sub" data-i18n="Accurate time keeps prayer pages on the minute.">Accurate time keeps prayer pages on the minute.</p>
+        <div class="card"><h3 data-i18n="Status">Status</h3>
+          <div class="kv" id="ntpKv"></div>
+          <div class="actions" style="margin-top:14px"><button class="btn ghost" id="btnSync" data-i18n="Sync now">Sync now</button></div>
+        </div>
+        <div class="card"><h3 data-i18n="Settings">Settings</h3>
+          <div class="grid" id="ntpForm"></div>
+          <div class="actions"><button class="btn" data-save="ntp" data-i18n="Save NTP settings">Save NTP settings</button></div>
+          <div class="hint" data-i18n="clockcap">Setting the system clock requires a privileged container (CAP_SYS_TIME). Otherwise the offset is applied in software, which is enough for scheduling.</div>
+        </div>
+      </section>
+
+      <!-- LOGS -->
+      <section class="panel" data-tab="logs">
+        <h2 data-i18n="Logs">Logs</h2>
+        <p class="sub" data-i18n="Service log for troubleshooting. Export and send the file for debugging.">Service log for troubleshooting. Export and send the file for debugging.</p>
+        <div class="card"><h3 data-i18n="Recent activity">Recent activity</h3>
+          <div class="logtools">
+            <button class="btn" id="btnExportLog" data-i18n="⬇ Export full log">⬇ Export full log</button>
+            <button class="btn ghost" id="btnRefreshLog" data-i18n="Refresh">Refresh</button>
+            <select id="logFilter" aria-label="Log severity filter">
+              <option value="all" data-i18n="All">All</option>
+              <option value="ERROR" data-i18n="Errors">Errors</option>
+              <option value="WARNING" data-i18n="Warnings">Warnings</option>
+              <option value="INFO" data-i18n="Info">Info</option>
+              <option value="sip">SIP</option>
+              <option value="scheduler" data-i18n="Schedule">Schedule</option>
+              <option value="audio" data-i18n="Audio">Audio</option>
+              <option value="ntp">NTP</option>
+            </select>
+            <label class="row" style="margin:0;color:var(--muted)"><input type="checkbox" id="logLive" style="margin-inline-end:6px"> <span data-i18n="Live">Live</span></label>
+            <label class="row" style="margin:0;color:var(--muted)"><input type="checkbox" id="logAuto" checked style="margin-inline-end:6px"> <span data-i18n="Auto-scroll">Auto-scroll</span></label>
+          </div>
+          <div class="logbox" id="logBox" tabindex="0">—</div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- confirmation modal -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card" id="modalCard">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMsg"></p>
+    <div class="modal-detail" id="modalDetail" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="modalCancel">Cancel</button>
+      <button class="btn" id="modalOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- boot / API failure overlay -->
+<div class="booterr" id="bootError">
+  <div class="box">
+    <h2 data-i18n="Could not load configuration">Could not load configuration</h2>
+    <p class="muted" data-i18n="The backend did not respond. Check that the service is running.">The backend did not respond. Check that the service is running.</p>
+    <div class="det" id="bootErrDet">—</div>
+    <button class="btn" id="bootRetry" data-i18n="Retry">Retry</button>
+  </div>
+</div>
+
+<script>
+const PRAYERS=["fajr","dhuhr","asr","maghrib","isha"];
+const AR={fajr:"الفجر",dhuhr:"الظهر",asr:"العصر",maghrib:"المغرب",isha:"العشاء",sunrise:"الشروق"};
+const TABS=[["dashboard","◷","Dashboard"],["server","⌁","SIP Registration"],["destinations","☎","Destinations"],
+  ["schedule","☾","Schedule"],["audio","♪","Audio & files"],["codecs","≋","Codecs"],
+  ["location","⌖","Location"],["ntp","⏱","Time / NTP"],["logs","▤","Logs"]];
+const METHODS=["MUSLIM_WORLD_LEAGUE","EGYPTIAN","KARACHI","UMM_AL_QURA","DUBAI",
+  "MOON_SIGHTING_COMMITTEE","NORTH_AMERICA","KUWAIT","QATAR","SINGAPORE","UOIF"];
+const METHOD_LABELS={
+  MUSLIM_WORLD_LEAGUE:{en:"Muslim World League",ar:"رابطة العالم الإسلامي"},
+  EGYPTIAN:{en:"Egyptian General Authority",ar:"الهيئة المصرية العامة للمساحة"},
+  KARACHI:{en:"Karachi",ar:"كراتشي"},
+  UMM_AL_QURA:{en:"Umm al-Qura",ar:"أم القرى"},
+  DUBAI:{en:"Dubai",ar:"دبي"},
+  MOON_SIGHTING_COMMITTEE:{en:"Moonsighting Committee",ar:"لجنة رؤية الهلال"},
+  NORTH_AMERICA:{en:"North America (ISNA)",ar:"أمريكا الشمالية (ISNA)"},
+  KUWAIT:{en:"Kuwait",ar:"الكويت"},
+  QATAR:{en:"Qatar",ar:"قطر"},
+  SINGAPORE:{en:"Singapore",ar:"سنغافورة"},
+  UOIF:{en:"UOIF (France)",ar:"اتحاد المنظمات الإسلامية في فرنسا"}};
+function methodLabel(m){const e=METHOD_LABELS[m];if(!e)return m;return LANG==="ar"?e.ar:e.en;}
+let CFG=null, STATUS=null, TZ="UTC", LANG="en";
+let TT={loaded:false,days:0}, AUDIO_FILES=[];
+
+// ---- i18n (Arabic) ----
+const I18N={ar:{"Dashboard":"لوحة التحكم","SIP Registration":"تسجيل SIP","Destinations":"وجهات البث","Schedule":"جدول الصلاة","Audio & files":"الصوت والملفات","Codecs":"الترميزات","Location":"الموقع","Time / NTP":"الوقت / NTP","Logs":"السجلات","Live status of the call-to-prayer paging service.":"الحالة المباشرة لخدمة بث الأذان.","Next page":"البث القادم","▶ Test page now":"▶ تجربة البث الآن","Test page now":"تجربة البث الآن","Dials enabled destinations and plays the assigned audio.":"يتصل بالوجهات المفعّلة ويشغّل الصوت المحدد.","Last page":"آخر بث","On the line now":"على الخط الآن","Codec":"الترميز","Elapsed":"المنقضي","Remaining":"المتبقي","No more today":"لا مزيد اليوم","Prayer schedule":"جدول أوقات الصلاة","Calculation method and which prayers to page.":"طريقة الحساب والصلوات التي سيتم بثها.","Time source":"مصدر الوقت","Prayer time source":"مصدر أوقات الصلاة","Calculation":"الحساب","Calculation method":"طريقة الحساب","Asr madhab":"مذهب العصر","High-latitude rule":"قاعدة خطوط العرض العالية","Prayers & fine-tuning":"الصلوات والضبط الدقيق","Today":"اليوم","Adjust (min)":"تعديل (دقيقة)","Adhan on":"الأذان مفعّل","Iqama on":"الإقامة مفعّلة","Prayer":"الصلاة","Iqama (optional second page)":"الإقامة (بث ثانٍ اختياري)","Enable iqama page":"تفعيل بث الإقامة","Minutes after adhan":"دقائق بعد الأذان","Save schedule":"حفظ جدول الصلاة","Import timetable":"استيراد الجدول","Adhan recordings and which one plays for each prayer.":"تسجيلات الأذان وأيها يُشغَّل لكل صلاة.","Library":"المكتبة","Upload":"رفع","Assignment":"التعيين","Default Adhan":"الأذان الافتراضي","Use this one file for ALL adhans":"استخدم هذا الملف لكل الأذانات","Iqama audio (default)":"صوت الإقامة (افتراضي)","Resample target":"معدل العينة","Volume gain (dB)":"كسب الصوت (dB)","Save audio settings":"حفظ إعدادات الصوت","File":"الملف","Length":"المدة","Format":"الصيغة","▶ Test":"▶ تجربة","Priorities":"الأولويات","Save & reconnect":"حفظ وإعادة الاتصال","Priority (0 = off, higher = preferred)":"الأولوية (0 = إيقاف، أعلى = مفضّل)","Enabled":"مفعّل","Used for astronomical prayer-time calculation.":"يُستخدم لحساب أوقات الصلاة فلكياً.","Coordinates":"الإحداثيات","Latitude":"خط العرض","Longitude":"خط الطول","Timezone (IANA)":"المنطقة الزمنية","Save location":"حفظ الموقع","Time & NTP":"الوقت / NTP","Accurate time keeps prayer pages on the minute.":"الوقت الدقيق يبقي البث على الدقيقة.","Status":"الحالة","Settings":"الإعدادات","Sync now":"مزامنة الآن","Save":"حفظ","NTP enabled":"تفعيل NTP","NTP server":"خادم NTP","Sync interval (min)":"فترة المزامنة (دقيقة)","Set system clock":"ضبط ساعة النظام","Service log for troubleshooting. Export and send the file for debugging.":"سجل الخدمة لاستكشاف الأخطاء. صدّر الملف وأرسله لتصحيح الأخطاء.","Recent activity":"النشاط الأخير","⬇ Export full log":"⬇ تصدير السجل الكامل","Refresh":"تحديث","Auto-scroll":"تمرير تلقائي","SIP account":"حساب SIP","Registration":"التسجيل","Reconnect now":"إعادة الاتصال الآن","Registrar / SIP domain":"المسجّل / نطاق SIP","Username / extension":"اسم المستخدم / التحويلة","Password":"كلمة المرور","Auth username":"اسم مستخدم المصادقة","Display name":"الاسم الظاهر","Transport":"النقل","Account enabled":"الحساب مفعّل","Paging targets":"وجهات البث","Call behaviour":"سلوك الاتصال","Name":"الاسم","Extension / URI":"التحويلة / URI","On":"مفعّل","+ Add destination":"+ إضافة وجهة","Saved":"تم الحفظ","Offset":"الإزاحة","Last sync":"آخر مزامنة","System time":"وقت النظام","Stratum":"الطبقة","Reference":"المرجع","Root delay":"تأخير الجذر","Root dispersion":"تشتت الجذر","Round-trip":"ذهاب وإياب","Next sync":"المزامنة القادمة","Server":"الخادم","never":"أبداً","clockcap":"ضبط ساعة النظام يتطلب حاوية ذات صلاحيات (CAP_SYS_TIME). وإلا تُطبّق الإزاحة برمجياً، وهو كافٍ للجدولة.","completed":"اكتمل","ringing":"يرن","Reconnecting…":"جارٍ إعادة الاتصال…","Next pages at 00:01 refresh":"البث القادم بعد تحديث 00:01","Priority offered during call setup. 0 disables a codec. Higher = preferred.":"الأولوية المعروضة أثناء إعداد الاتصال. 0 يعطّل الترميز. أعلى = مفضّل.","SIP account this unit registers as on your PBX / registrar.":"حساب SIP الذي تسجّل به هذه الوحدة على المقسّم.","Extensions, paging groups, or multicast numbers to call.":"التحويلات أو مجموعات البث أو أرقام البث المتعدد للاتصال بها.","Unsaved changes":"تغييرات غير محفوظة","Confirm":"تأكيد","Cancel":"إلغاء","Working…":"جارٍ التنفيذ…","Saving…":"جارٍ الحفظ…","Save failed":"فشل الحفظ","Please fix the highlighted fields":"يرجى تصحيح الحقول المظللة","Could not load configuration":"تعذّر تحميل الإعدادات","The backend did not respond. Check that the service is running.":"الخادم لم يستجب. تأكد من تشغيل الخدمة.","Retry":"إعادة المحاولة","System health":"حالة النظام","Backend / API":"الخادم / API","Reachable":"متصل","Registered":"مسجّل","Not registered":"غير مسجّل","Stopped":"متوقف","Library not loaded":"المكتبة غير محمّلة","Time sync":"مزامنة الوقت","Synced":"تمت المزامنة","Not synced":"غير متزامن","Failed":"فشل","Manual":"يدوي","Calculated":"محسوب","No timetable imported":"لا يوجد جدول مستورد","None scheduled":"لا شيء مجدول","Active call":"اتصال نشط","No active call":"لا يوجد اتصال نشط","In progress":"قيد التنفيذ","Audio":"الصوت","No files":"لا ملفات","Assigned":"معيّن","Unassigned":"غير معيّن","Timezone":"المنطقة الزمنية","Loaded":"محمّل","days in timetable":"يوماً في الجدول","No timetable imported. Import a file or switch to calculated times.":"لا يوجد جدول مستورد. استورد ملفاً أو بدّل إلى الأوقات المحسوبة.","No audio files uploaded yet. Upload an audio file to assign it to a prayer.":"لم يتم رفع أي ملف صوتي بعد. ارفع ملفاً لتعيينه لصلاة.","No destinations configured. Add at least one before testing a page.":"لا توجد وجهات. أضف وجهة واحدة على الأقل قبل التجربة.","Assigned file is missing from the library.":"الملف المعيّن غير موجود في المكتبة.","Assigned file is missing.":"الملف المعيّن مفقود.","not WAV":"ليس WAV","none":"لا شيء","Delete":"حذف","Delete audio file?":"حذف الملف الصوتي؟","This cannot be undone.":"لا يمكن التراجع عن هذا.","Deleted":"تم الحذف","Delete failed":"فشل الحذف","Delete destination?":"حذف الوجهة؟","this destination":"هذه الوجهة","Save destinations to apply.":"احفظ الوجهات للتطبيق.","Save to apply.":"احفظ للتطبيق.","Start a live test page?":"بدء بث تجريبي مباشر؟","This plays real audio to the destination(s) below. Continue?":"سيشغّل صوتاً حقيقياً إلى الوجهات أدناه. متابعة؟","This will start a REAL page to the configured destination(s). Continue?":"سيبدأ بثاً حقيقياً إلى الوجهات المهيأة. متابعة؟","Mode":"الوضع","Play test":"تشغيل التجربة","Start test":"بدء البث التجريبي","Paging…":"جارٍ البث…","Test page started":"بدأ البث التجريبي","Test failed":"فشلت التجربة","No enabled destinations to test.":"لا توجد وجهات مفعّلة للتجربة.","Choose a file first":"اختر ملفاً أولاً","Unsupported file type":"نوع ملف غير مدعوم","Uploading…":"جارٍ الرفع…","Upload complete. Processing…":"اكتمل الرفع. جارٍ المعالجة…","Upload successful":"تم الرفع بنجاح","Upload failed":"فشل الرفع","Choose a timetable file first":"اختر ملف جدول أولاً","Importing…":"جارٍ الاستيراد…","Upload complete. Processing timetable…":"اكتمل الرفع. جارٍ معالجة الجدول…","Import successful":"تم الاستيراد بنجاح","Import failed":"فشل الاستيراد","Exported":"تم التصدير","Export failed":"فشل التصدير","Exporting…":"جارٍ التصدير…","Syncing…":"جارٍ المزامنة…","Sync failed":"فشلت المزامنة","Could not load audio":"تعذّر تحميل الصوت","Could not load logs":"تعذّر تحميل السجلات","No log entries to show.":"لا توجد سجلات لعرضها.","All":"الكل","Errors":"أخطاء","Warnings":"تحذيرات","Info":"معلومات","Live":"مباشر","Test":"تجربة","dialing":"جارٍ الاتصال","playing":"قيد التشغيل","finishing":"ينهي","Network error":"خطأ في الشبكة","SIP server / registrar is required.":"خادم SIP مطلوب.","Username / extension is required.":"اسم المستخدم / التحويلة مطلوب.","No password set — registration may fail.":"لا توجد كلمة مرور — قد يفشل التسجيل.","Port must be 1–65535.":"المنفذ يجب أن يكون 1–65535.","Port must be 0–65535.":"المنفذ يجب أن يكون 0–65535.","Expiry must be ≥ 10 s.":"الانتهاء يجب أن يكون ≥ 10 ثوان.","Must be a positive number.":"يجب أن يكون رقماً موجباً.","Cannot be negative.":"لا يمكن أن يكون سالباً.","Latitude must be between -90 and 90.":"خط العرض يجب أن يكون بين -90 و 90.","Longitude must be between -180 and 180.":"خط الطول يجب أن يكون بين -180 و 180.","Timezone is required.":"المنطقة الزمنية مطلوبة.","NTP server is required.":"خادم NTP مطلوب.","Interval must be ≥ 1 min.":"الفترة يجب أن تكون ≥ دقيقة.","Name is required.":"الاسم مطلوب.","Extension / URI is required.":"التحويلة / URI مطلوبة.","URI cannot contain spaces.":"لا يمكن أن تحتوي URI على مسافات.","Duplicate destination name.":"اسم وجهة مكرر.","Duplicate URI.":"عنوان URI مكرر.","Destination":"وجهة بث","stopped":"متوقّف","n/a":"غير متاح","ok":"سليم","missing":"مفقود","failed":"فشل","No page yet.":"لا يوجد بث بعد.","Adhan":"أذان","Iqama":"إقامة","Backend not reachable — cannot test.":"الخادم غير متاح — لا يمكن التجربة.","Save or discard your changes before running a live test. The test uses the last saved configuration, not the values currently on screen.":"احفظ التغييرات أو تراجع عنها قبل تشغيل بث تجريبي مباشر. تستخدم التجربة آخر إعدادات محفوظة، وليس القيم الظاهرة حالياً على الشاشة.","Go to unsaved section":"الانتقال إلى القسم غير المحفوظ","Real audio will play on the enabled destinations. Make sure the speakers / paging system are ready before continuing.":"سيتم تشغيل صوت حقيقي على وجهات البث المفعّلة. تأكد أن السماعات أو نظام النداء جاهز قبل المتابعة.","Test request sent. Watch active call status and logs.":"تم إرسال طلب التجربة. راقب حالة الاتصال النشط والسجلات.","Request timed out. The backend did not confirm whether the test started. Check active call status and logs.":"انتهت مهلة الطلب. لم يؤكّد الخادم ما إذا بدأت التجربة. تحقق من حالة الاتصال النشط والسجلات.","Request timed out — check status.":"انتهت مهلة الطلب — تحقق من الحالة.","Request timed out — check status and try again.":"انتهت مهلة الطلب — تحقق من الحالة وحاول مجدداً.","Discard changes":"تجاهل التغييرات","Discard changes?":"تجاهل التغييرات؟","Discard":"تجاهل","Reload the last saved configuration and lose your unsaved edits?":"إعادة تحميل آخر إعدادات محفوظة وفقدان تعديلاتك غير المحفوظة؟","Changes discarded":"تم تجاهل التغييرات","Could not reload configuration":"تعذّر إعادة تحميل الإعدادات","Save destinations":"حفظ وجهات البث","Save call behaviour":"حفظ إعدادات الاتصال","Save NTP settings":"حفظ إعدادات الوقت","Saved · reconnecting SIP":"تم الحفظ · جارٍ إعادة اتصال SIP","Calculated (astronomical)":"محسوب (فلكي)","Manual timetable (uploaded file)":"جدول يدوي (ملف مرفوع)","Shafi (standard Asr)":"شافعي (عصر قياسي)","Hanafi (later Asr)":"حنفي (عصر متأخّر)","Sequential (one after another)":"تسلسلي (واحد تلو الآخر)","Parallel (all at once)":"متوازٍ (الكل دفعة واحدة)","SIP library (pjsua2) is not loaded — paging is disabled. You can still edit all settings in this mode.":"مكتبة SIP (pjsua2) غير محمّلة — البث معطّل. لا يزال بإمكانك تعديل كل الإعدادات في هذا الوضع.","Paging mode":"وضع البث","Ring timeout (s)":"مهلة الرنين (ث)","Max call length (s)":"أقصى مدة اتصال (ث)","Delay after answer (ms)":"التأخير بعد الرد (مللي ث)","Hang up after audio (ms)":"إنهاء بعد الصوت (مللي ث)","Outbound proxy (optional)":"وكيل صادر (اختياري)","Registrar port":"منفذ المسجّل","Local bind port":"منفذ الربط المحلي","Register expiry (s)":"انتهاء التسجيل (ث)","Audio files":"ملفات الصوت","Processing":"جارٍ المعالجة","Stop current page":"إيقاف البث الحالي","Stop the active page?":"إيقاف البث النشط؟","This will immediately stop the active page/call. Continue?":"سيتم إيقاف البث أو الاتصال النشط فوراً. هل تريد المتابعة؟","Stopping…":"جارٍ الإيقاف…","Stopping":"جارٍ الإيقاف","Active page stopped":"تم إيقاف البث النشط","No active call to stop":"لا يوجد اتصال نشط لإيقافه","Stop failed":"فشل الإيقاف","Request timed out. The backend did not confirm the result. Check active call status and logs.":"انتهت مهلة الطلب. لم تؤكّد الخدمة النتيجة. تحقّق من حالة الاتصال النشط والسجلات.","Dialing":"جارٍ الاتصال","Connected":"متصل","Playing":"جارٍ التشغيل","Finishing":"يُنهي","Manually stopped":"تم الإيقاف يدوياً","updated":"حُدّث","in":"خلال","now":"الآن","Last updated":"آخر تحديث","connection lost":"الاتصال منقطع","Offline / stale":"غير متصل / قديم","Backend connection lost. Showing last known status from":"انقطع الاتصال بالخدمة. يتم عرض آخر حالة معروفة من","Save or discard your changes before changing the language.":"احفظ التغييرات أو تراجع عنها قبل تغيير اللغة.","Timetable imported. Prayer time source changed to Manual.":"تم استيراد الجدول. تم تغيير مصدر أوقات الصلاة إلى يدوي.","◐ Auto":"◐ تلقائي","🌙 Dark":"🌙 داكن","☀ Light":"☀ فاتح","Ready":"جاهز","Could not load prayer timeline. Showing last known values.":"تعذّر تحميل جدول الصلاة. يتم عرض آخر القيم المعروفة.","Could not load timetable status":"تعذّر تحميل حالة الجدول المستورد","Location mode":"وضع تحديد الموقع","Select by country / city":"التحديد حسب الدولة / المدينة","Manual coordinates":"إحداثيات يدوية","Country":"الدولة","City":"المدينة","Select country":"اختر الدولة","Search city":"ابحث عن مدينة","Search by city name, Arabic name, or ISO code":"ابحث بالاسم أو الاسم العربي أو رمز ISO","No matches":"لا توجد نتائج","No location selected":"لم يتم تحديد موقع","Advanced manual override":"تجاوز يدوي متقدّم","Recommended calculation method":"طريقة الحساب المقترحة","Apply recommended":"تطبيق المقترحة","Keep current method":"الإبقاء على الحالية","Recommended method applied":"تم تطبيق الطريقة المقترحة","Select a city, or switch to manual coordinates.":"اختر مدينة، أو بدّل إلى الإحداثيات اليدوية.","Used when a prayer has no specific file":"يُستخدم عندما لا يكون للصلاة ملف محدد","Overrides the per-prayer adhan files below":"يتجاوز ملفات الأذان لكل صلاة بالأسفل","Used when a prayer has no specific iqama file":"يُستخدم عندما لا يكون للصلاة ملف إقامة محدد","e.g. Etc/UTC":"مثال: Etc/UTC","PBX host, e.g. sip.example.net":"عنوان مقسّم PBX، مثال: sip.example.net","host:port":"المضيف:المنفذ","Manual uses the file you import below; calculated uses lat/long + method":"الوضع اليدوي يستخدم الملف الذي تستورده أدناه؛ والوضع المحسوب يستخدم الإحداثيات وطريقة الحساب","Search by country name or ISO code":"ابحث باسم الدولة أو رمز ISO","Search by city name or alternate/local name":"ابحث باسم المدينة أو الاسم المحلي/البديل","Select country first":"اختر الدولة أولاً","City list is based on the bundled offline city database. If your exact location is missing, use Manual coordinates.":"تعتمد قائمة المدن على قاعدة بيانات محلية مدمجة. إذا لم تجد موقعك بدقة، استخدم الإحداثيات اليدوية.","Please select a country from the list.":"يرجى اختيار دولة من القائمة.","Please select a city from the list.":"يرجى اختيار مدينة من القائمة.","Invalid timezone. Use a valid IANA timezone such as Etc/UTC.":"منطقة زمنية غير صحيحة. استخدم منطقة IANA صحيحة مثل Etc/UTC.","Location database is unavailable. Use manual coordinates or check installation.":"قاعدة بيانات المواقع غير متاحة. استخدم الإحداثيات اليدوية أو تحقق من التثبيت.","Recommended method applied. Remember to save both Location and Schedule.":"تم تطبيق الطريقة المقترحة. تذكّر حفظ الموقع والجدول معاً.","Add at least one destination before saving.":"أضف وجهة واحدة على الأقل قبل الحفظ.","enabled":"مفعّلة","None — paging will not run":"لا شيء — لن يعمل البث","No destinations enabled. Paging will not run until you add and enable at least one destination.":"لا توجد وجهات مفعّلة. لن يعمل البث حتى تضيف وجهة واحدة وتفعّلها على الأقل.","Saved, but no destinations are enabled — paging will not run.":"تم الحفظ، لكن لا توجد وجهات مفعّلة — لن يعمل البث.","Save location and calculation method":"حفظ الموقع وطريقة الحساب","Saved location and calculation method":"تم حفظ الموقع وطريقة الحساب","Middle of the night":"منتصف الليل","Seventh of the night":"سُبع الليل","Twilight angle":"زاوية الشفق","Coordinates from selected city":"الإحداثيات من المدينة المحددة","These come from the selected city. To edit them, switch Location mode to Manual coordinates.":"هذه مأخوذة من المدينة المحددة. لتعديلها، بدّل وضع الموقع إلى الإحداثيات اليدوية."}};
+function t(s){ if(LANG==="ar" && I18N.ar[s]!==undefined) return I18N.ar[s]; return s; }
+
+const $=s=>document.querySelector(s);
+const el=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Object.entries(a)){
+  if(x==="class")e.className=v;else if(x==="html")e.innerHTML=v;else if(x.startsWith("on"))e.addEventListener(x.slice(2),v);else e.setAttribute(x,v);}
+  k.forEach(c=>e.append(c.nodeType?c:document.createTextNode(c)));return e;};
+
+async function api(path,method="GET",body,opts={}){
+  const o={method,headers:{}};
+  if(body!==undefined){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(body);}
+  let timer=null;
+  if(opts.timeoutMs){const ac=new AbortController();o.signal=ac.signal;
+    timer=setTimeout(()=>ac.abort(),opts.timeoutMs);}
+  try{
+    const r=await fetch(path,o);
+    if(!r.ok){const tx=await r.text();throw new Error(tx||r.statusText);}
+    return await r.json();
+  }catch(e){
+    if(e.name==="AbortError")throw new Error("__timeout__");
+    throw e;
+  }finally{if(timer)clearTimeout(timer);}
+}
+function toast(msg,err=false){const t=$("#toast");t.textContent=msg;t.className="toast show"+(err?" err":"");
+  setTimeout(()=>t.className="toast",2600);}
+function fmtTime(iso){if(!iso)return"—";return new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',timeZone:TZ});}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+// single-language prayer label (no English+Arabic mixing)
+const PR_EN={fajr:"Fajr",dhuhr:"Dhuhr",asr:"Asr",maghrib:"Maghrib",isha:"Isha"};
+function prayerLabel(p){return LANG==="ar"?(AR[p]||p):(PR_EN[p]||cap(p));}
+const PRAYER_ICON={fajr:"🌅",dhuhr:"☀️",asr:"🌤️",maghrib:"🌇",isha:"🌙"};
+let NEXT_RUN=null;            // ISO time of next page, for the live countdown
+let LAST_OK_TS=null;         // last successful /api/status
+let STALE=false;             // backend polling currently failing?
+function kindLabel(k){const ar={adhan:"أذان",iqama:"إقامة",test:"تجربة"};return LANG==="ar"?(ar[k]||k):k;}
+// localize a server-provided label like "Fajr adhan" / "Test · file.wav" (filenames kept)
+function localizeText(s){if(LANG!=="ar"||!s)return s;let out=s;
+  Object.entries(PR_EN).forEach(([k,en])=>{out=out.replace(new RegExp("\\b"+en+"\\b","g"),AR[k]);});
+  return out.replace(/\badhan\b/gi,"أذان").replace(/\biqama\b/gi,"إقامة").replace(/\bTest\b/g,"تجربة");}
+function fmtDur(s){if(s==null)return"—";s=Math.round(s);const m=Math.floor(s/60),ss=s%60;
+  const mu=LANG==="ar"?"د":"m",su=LANG==="ar"?"ث":"s";return (m?m+mu+" ":"")+ss+su;}
+// hydration guard: dirty watchers ignore programmatic re-renders / data loads
+let HYDRATING=false;
+function hydrate(fn){const prev=HYDRATING;HYDRATING=true;
+  try{return fn();}finally{HYDRATING=prev;}}
+
+// ============ UX INFRASTRUCTURE ============
+
+// ---- confirmation modal ---- returns Promise<bool>
+function confirmDialog({title,message,detail,confirmText,danger}){
+  return new Promise(res=>{
+    const m=$("#modal"),card=$("#modalCard");
+    $("#modalTitle").textContent=title||t("Confirm")||"Confirm";
+    $("#modalMsg").textContent=message||"";
+    card.classList.toggle("danger",!!danger);
+    const dt=$("#modalDetail");dt.innerHTML="";
+    if(detail&&Object.keys(detail).length){dt.style.display="";
+      Object.entries(detail).forEach(([k,v])=>{dt.append(el("span",{class:"k"},k),el("span",{},String(v)));});
+    }else dt.style.display="none";
+    const ok=$("#modalOk"),cancel=$("#modalCancel");
+    ok.textContent=confirmText||t("Confirm")||"Confirm";
+    ok.className="btn"+(danger?" danger":"");cancel.textContent=t("Cancel")||"Cancel";
+    const close=v=>{m.classList.remove("show");ok.onclick=cancel.onclick=null;
+      document.removeEventListener("keydown",onkey);res(v);};
+    // Escape always cancels. Enter only confirms when the confirm button is focused,
+    // so a stray Enter can't accidentally trigger a live paging action.
+    const onkey=e=>{if(e.key==="Escape")close(false);
+      else if(e.key==="Enter"&&document.activeElement===ok)close(true);};
+    ok.onclick=()=>close(true);cancel.onclick=()=>close(false);
+    m.onclick=e=>{if(e.target===m)close(false);};
+    document.addEventListener("keydown",onkey);
+    m.classList.add("show");
+    // For destructive/live actions, focus Cancel by default (safer); else focus confirm.
+    (danger?cancel:ok).focus();
+  });
+}
+
+// ---- button loading wrapper ----
+async function withBtn(btn,fn,runningLabel){
+  if(!btn)return fn();
+  const orig=btn.innerHTML,wasDisabled=btn.disabled;
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>'+(runningLabel||t("Working…")||"Working…");
+  try{return await fn();}
+  finally{btn.disabled=wasDisabled;btn.innerHTML=orig;}
+}
+
+// ---- upload with progress (XHR) ----
+function uploadWithProgress(url,file,prog){
+  return new Promise((resolve,reject)=>{
+    const fd=new FormData();fd.append("file",file);
+    const xhr=new XMLHttpRequest();xhr.open("POST",url);
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&prog)prog(Math.round(100*e.loaded/e.total));};
+    xhr.upload.onload=()=>{if(prog)prog(100,true);};
+    xhr.onload=()=>{
+      let body=null;try{body=JSON.parse(xhr.responseText);}catch(e){}
+      if(xhr.status>=200&&xhr.status<300)resolve(body??{});
+      else reject(new Error((body&&(body.detail||body.error))||xhr.responseText||("HTTP "+xhr.status)));
+    };
+    xhr.onerror=()=>reject(new Error(t("Network error")||"Network error"));
+    xhr.send(fd);
+  });
+}
+function progUI(id,state,pct,msg){
+  const w=$("#"+id);if(!w)return;w.className="uprog show"+(state==="err"?" err":state==="ok"?" ok":"");
+  w.querySelector("i").style.width=(pct!=null?pct:0)+"%";
+  w.querySelector(".st").textContent=msg||"";
+  w.querySelector(".pct").textContent=(pct!=null&&state!=="ok"&&state!=="err")?pct+"%":"";
+  if(state==="hide")w.className="uprog";
+}
+
+// ---- dirty / unsaved tracking ----
+const DIRTY=new Set();
+const SECTION_TAB={sip:"server",destinations:"destinations",call:"destinations",prayer:"schedule",
+  location:"location",codecs:"codecs",ntp:"ntp",audio:"audio"};
+function setDirty(section,on){
+  if(on)DIRTY.add(section);else DIRTY.delete(section);
+  if(section==="prayer"&&!on)REC_APPLIED=false;
+  // save button highlight + per-section tag
+  document.querySelectorAll('[data-save="'+section+'"]').forEach(b=>{
+    b.classList.toggle("dirty",on);
+    const tag=b.parentElement&&b.parentElement.querySelector(".dirtytag");
+    if(tag)tag.classList.toggle("show",on);
+  });
+  // nav dot on owning tab
+  const tab=SECTION_TAB[section];
+  if(tab){const anyDirtyForTab=[...DIRTY].some(s=>SECTION_TAB[s]===tab);
+    document.querySelectorAll(".nav button").forEach((b,i)=>{
+      if(TABS[i][0]===tab)b.classList.toggle("hasdirty",anyDirtyForTab);});}
+  $("#unsaved").classList.toggle("show",DIRTY.size>0);
+  const db=$("#btnDiscard");if(db)db.style.display=DIRTY.size>0?"":"none";
+  const cb=$("#btnSaveLocMethod");if(cb)cb.style.display=(REC_APPLIED&&DIRTY.has("prayer"))?"":"none";
+}
+function gotoFirstDirty(){
+  const first=[...DIRTY][0];if(first&&SECTION_TAB[first])show(SECTION_TAB[first]);
+}
+async function discardChanges(){
+  if(!DIRTY.size)return;
+  const go=await confirmDialog({title:t("Discard changes?")||"Discard changes?",
+    message:t("Reload the last saved configuration and lose your unsaved edits?")||"Reload the last saved configuration and lose your unsaved edits?",
+    confirmText:t("Discard")||"Discard",danger:true});
+  if(!go)return;
+  let fresh;
+  try{fresh=await api("/api/config",undefined,undefined,{timeoutMs:15000});}
+  catch(e){
+    // reload failed — keep the unsaved state intact, do NOT clear dirty
+    toast((t("Could not reload configuration")||"Could not reload configuration")+": "+
+      (e.message==="__timeout__"?(t("Request timed out — check status.")||"timed out"):e.message),true);
+    return;
+  }
+  CFG=fresh;
+  hydrate(()=>{renderSip();renderDest();renderLoc();renderCodecs();renderNtp();renderSchedule(null);});
+  [...DIRTY].forEach(s=>setDirty(s,false));DIRTY.clear();
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("hasdirty"));
+  document.querySelectorAll('[data-save]').forEach(b=>b.classList.remove("dirty"));
+  $("#unsaved").classList.remove("show");$("#btnDiscard").style.display="none";
+  hydrate(()=>{loadTimeline();if($("#audioBody"))loadAudio();});
+  toast(t("Changes discarded")||"Changes discarded");
+}
+
+// ---- unified, safe live-test flow ----
+async function runTest(opts,btn){
+  if(!STATUS){toast(t("Backend not reachable — cannot test.")||"Backend not reachable — cannot test.",true);return;}
+  const dests=(CFG.destinations||[]).filter(x=>x.enabled);
+  if(!dests.length){toast(t("No enabled destinations to test.")||"No enabled destinations to test.",true);show("destinations");return;}
+  // unsaved changes block — a live test uses the last SAVED config, not on-screen edits
+  if(DIRTY.size){
+    const goSec=await confirmDialog({title:t("Unsaved changes")||"Unsaved changes",
+      message:t("Save or discard your changes before running a live test. The test uses the last saved configuration, not the values currently on screen.")
+        ||"Save or discard your changes before running a live test. The test uses the last saved configuration, not the values currently on screen.",
+      confirmText:t("Go to unsaved section")||"Go to unsaved section"});
+    if(goSec)gotoFirstDirty();
+    return;
+  }
+  const detail={};
+  if(opts.prayer)detail[t("Prayer")||"Prayer"]=prayerLabel(opts.prayer);
+  if(opts.file)detail[t("File")||"File"]=opts.file;
+  detail[t("Destinations")||"Destinations"]=dests.map(x=>x.uri||x.name).join(", ");
+  detail[t("Mode")||"Mode"]=CFG.call.mode;
+  const go=await confirmDialog({title:t("Start a live test page?")||"Start a live test page?",danger:true,
+    message:t("Real audio will play on the enabled destinations. Make sure the speakers / paging system are ready before continuing.")
+      ||"Real audio will play on the enabled destinations. Make sure the speakers / paging system are ready before continuing.",
+    detail,confirmText:t("Start test")||"Start test"});
+  if(!go)return;
+  const url=opts.prayer?"/api/page-test":"/api/schedule/test-play";
+  const payload=opts.prayer?{prayer:opts.prayer}:{file:opts.file};
+  await withBtn(btn,async()=>{
+    try{
+      await api(url,"POST",payload,{timeoutMs:15000});
+      toast(t("Test request sent. Watch active call status and logs.")||"Test request sent. Watch active call status and logs.");
+    }catch(err){
+      if(err.message==="__timeout__")
+        toast(t("Request timed out. The backend did not confirm whether the test started. Check active call status and logs.")
+          ||"Request timed out. Check active call status and logs.",true);
+      else toast((t("Test failed")||"Test failed")+": "+err.message,true);
+    }finally{
+      setTimeout(refreshStatus,800);
+      if(document.querySelector('.panel[data-tab="logs"]').classList.contains("active"))setTimeout(loadLogs,800);
+    }
+  },t("Paging…")||"Paging…");
+}
+function watchDirty(containerSel,section){
+  const c=document.querySelector(containerSel);if(!c)return;
+  if(c._dirtyWatched)return;c._dirtyWatched=true;   // attach once
+  const h=()=>{if(!HYDRATING)setDirty(section,true);};
+  c.addEventListener("input",h);
+  c.addEventListener("change",h);
+}
+
+// ---- validation ---- show inline errors, return ok
+function clearErrors(container){
+  container.querySelectorAll(".invalid").forEach(n=>n.classList.remove("invalid"));
+  container.querySelectorAll(".errmsg,.warnmsg").forEach(n=>n.remove());
+}
+function markErr(input,msg,warn){
+  if(input)input.classList.add(warn?"":"invalid");
+  const m=el("div",{class:warn?"warnmsg":"errmsg"},msg);
+  const host=input?(input.closest("td")||input.closest("div")||input.parentElement):null;
+  if(host)host.append(m);return false;
+}
+function isNum(v){return v!==""&&v!=null&&!isNaN(+v);}
+function isValidTz(tz){tz=(tz||"").trim();if(!tz)return false;
+  if(tz!=="UTC"&&!/^[A-Za-z]+(?:\/[A-Za-z0-9_+-]+)+$/.test(tz))return false;
+  try{Intl.DateTimeFormat(undefined,{timeZone:tz});return true;}catch(e){return false;}}
+const VALIDATORS={
+  sip(F){let ok=true;
+    if(F.enabled.checked){
+      if(!F.registrar.value.trim())ok=markErr(F.registrar,t("SIP server / registrar is required."));
+      if(!F.username.value.trim())ok=markErr(F.username,t("Username / extension is required."))&&ok;
+      if(!F.password.value)markErr(F.password,t("No password set — registration may fail."),true);
+    }
+    if(!isNum(F.port.value)||+F.port.value<1||+F.port.value>65535)ok=markErr(F.port,t("Port must be 1–65535."))&&ok;
+    if(!isNum(F.local_port.value)||+F.local_port.value<0||+F.local_port.value>65535)ok=markErr(F.local_port,t("Port must be 0–65535."))&&ok;
+    if(!isNum(F.register_expires.value)||+F.register_expires.value<10)ok=markErr(F.register_expires,t("Expiry must be ≥ 10 s."))&&ok;
+    return ok;},
+  call(F){let ok=true;
+    [["ring_timeout",1],["max_call_seconds",1]].forEach(([k,min])=>{
+      if(!isNum(F[k].value)||+F[k].value<min)ok=markErr(F[k],t("Must be a positive number."))&&ok;});
+    ["answer_delay_ms","hangup_after_eof_ms"].forEach(k=>{
+      if(!isNum(F[k].value)||+F[k].value<0)ok=markErr(F[k],t("Cannot be negative."))&&ok;});
+    return ok;},
+  location(F){let ok=true;
+    const manual=F._mode&&F._mode.value==="manual";
+    if(!manual){
+      if(!(typeof SEL!=="undefined"&&SEL.country))ok=markErr(F._country,t("Please select a country from the list."))&&ok;
+      if(!(typeof SEL!=="undefined"&&SEL.city))ok=markErr(F._city,t("Please select a city from the list."))&&ok;
+    }
+    if(!isNum(F.latitude.value)||+F.latitude.value<-90||+F.latitude.value>90)ok=markErr(F.latitude,t("Latitude must be between -90 and 90."))&&ok;
+    if(!isNum(F.longitude.value)||+F.longitude.value<-180||+F.longitude.value>180)ok=markErr(F.longitude,t("Longitude must be between -180 and 180."))&&ok;
+    const tzv=(F.timezone.value||"").trim();
+    if(!tzv)ok=markErr(F.timezone,t("Timezone is required."))&&ok;
+    else if(!isValidTz(tzv))ok=markErr(F.timezone,t("Invalid timezone. Use a valid IANA timezone such as Etc/UTC."))&&ok;
+    return ok;},
+  ntp(F){let ok=true;
+    if(F.enabled.checked&&!F.server.value.trim())ok=markErr(F.server,t("NTP server is required."));
+    if(!isNum(F.sync_interval_min.value)||+F.sync_interval_min.value<1)ok=markErr(F.sync_interval_min,t("Interval must be ≥ 1 min."))&&ok;
+    return ok;},
+  destinations(){let ok=true;const seenN={},seenU={};
+    [...$("#destBody").querySelectorAll("tr")].filter(tr=>tr._d).forEach(tr=>{
+      const nm=tr._d.name,uri=tr._d.uri;
+      if(!nm.value.trim())ok=markErr(nm,t("Name is required."))&&ok;
+      if(!uri.value.trim())ok=markErr(uri,t("Extension / URI is required."))&&ok;
+      else if(/\s/.test(uri.value.trim()))ok=markErr(uri,t("URI cannot contain spaces."))&&ok;
+      const nkey=nm.value.trim().toLowerCase(),ukey=uri.value.trim().toLowerCase();
+      if(nkey){if(seenN[nkey])markErr(nm,t("Duplicate destination name."),true);seenN[nkey]=1;}
+      if(ukey){if(seenU[ukey])markErr(uri,t("Duplicate URI."),true);seenU[ukey]=1;}
+    });return ok;},
+  prayer(){return true;}, codecs(){return true;}, audio(){return true;}
+};
+function validateSection(section){
+  const tabMap={sip:"#sipForm",call:"#callForm",location:"#locForm",ntp:"#ntpForm",
+    destinations:"#destBody",prayer:"#calcForm",codecs:"#codecForm",audio:"#assignForm"};
+  const cont=document.querySelector(tabMap[section]);if(cont)clearErrors(cont.closest(".panel")||cont);
+  const v=VALIDATORS[section];if(!v)return true;
+  const F=cont&&cont._fields;return v(F);
+}
+
+// ---- nav ----
+function buildNav(){
+  const nav=$("#nav");nav.innerHTML="";
+  TABS.forEach(([id,ico,label],i)=>{
+    nav.append(el("button",{class:i===0?"active":"","data-i18n":label,onclick:()=>show(id)},
+      el("span",{class:"ico"},ico),t(label)));
+  });
+}
+function show(id){
+  document.querySelectorAll(".nav button").forEach((b,i)=>b.classList.toggle("active",TABS[i][0]===id));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.dataset.tab===id));
+  if(id==="audio")loadAudio();
+  if(id==="logs")loadLogs();
+}
+
+// ---- generic field helpers ----
+function field(label,node,hint){const w=el("div",{});w.append(el("label",{"data-i18n":label},t(label)),node);
+  if(hint)w.append(el("div",{class:"hint","data-i18n":hint},t(hint)));return w;}
+function txt(val,attrs={}){return el("input",Object.assign({value:val??""},attrs));}
+function num(val,attrs={}){return el("input",Object.assign({type:"number",value:val??0},attrs));}
+function sel(val,opts){const s=el("select",{});opts.forEach(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;
+  const op=el("option",{value:v},l);if(String(v)===String(val))op.selected=true;s.append(op);});return s;}
+function chk(val){return el("input",{type:"checkbox",...(val?{checked:""}:{})});}
+
+// ---- render forms ----
+function renderSip(){
+  const s=CFG.sip, f=$("#sipForm");f.innerHTML="";
+  const F={};
+  F.enabled=chk(s.enabled); F.registrar=txt(s.registrar,{class:"ltr"}); F.proxy=txt(s.proxy,{class:"ltr"});
+  F.port=num(s.port); F.local_port=num(s.local_port);
+  F.transport=sel(s.transport,["udp","tcp","tls"]);F.transport.classList.add("ltr");
+  F.username=txt(s.username,{class:"ltr"}); F.auth_user=txt(s.auth_user,{class:"ltr"});
+  F.password=txt(s.password,{type:"password",class:"ltr"}); F.display_name=txt(s.display_name);
+  F.register_expires=num(s.register_expires);
+  f.append(
+    field("Registrar / SIP domain",F.registrar,"PBX host, e.g. sip.example.net"),
+    field("Outbound proxy (optional)",F.proxy,"host:port"),
+    field("Registrar port",F.port), field("Local bind port",F.local_port),
+    field("Transport",F.transport),
+    field("Username / extension",F.username),
+    field("Auth username",F.auth_user),
+    field("Password",F.password),
+    field("Display name",F.display_name),
+    field("Register expiry (s)",F.register_expires),
+    field("Account enabled",F.enabled));
+  f._fields=F;
+}
+function collectSip(){const F=$("#sipForm")._fields;return{
+  enabled:F.enabled.checked,registrar:F.registrar.value,proxy:F.proxy.value,
+  port:+F.port.value,local_port:+F.local_port.value,transport:F.transport.value,
+  username:F.username.value,auth_user:F.auth_user.value,password:F.password.value,
+  display_name:F.display_name.value,register_expires:+F.register_expires.value};}
+
+function updateDestWarn(){
+  const w=$("#destWarn");if(!w)return;w.innerHTML="";
+  const rows=[...$("#destBody").querySelectorAll("tr")].filter(tr=>tr._d);
+  const enabled=rows.filter(tr=>tr._d.on.checked).length;
+  if(!enabled){
+    w.append(el("div",{class:"banner stale",style:"margin-bottom:12px"},
+      t("No destinations enabled. Paging will not run until you add and enable at least one destination.")||
+      "No destinations enabled. Paging will not run until you add and enable at least one destination."));
+  }
+}
+function renderDest(){
+  const b=$("#destBody");b.innerHTML="";
+  if(!CFG.destinations.length){
+    b.append(el("tr",{},el("td",{colspan:4},
+      el("div",{class:"empty"},t("No destinations configured. Add at least one before testing a page.")||"No destinations configured. Add at least one before testing a page."))));
+  }
+  CFG.destinations.forEach((d,i)=>{
+    const name=txt(d.name),uri=txt(d.uri,{class:"ltr"}),on=chk(d.enabled);
+    const tr=el("tr",{style:d.enabled?"":"opacity:.5"},el("td",{},name),el("td",{},uri),el("td",{},on),
+      el("td",{},el("button",{class:"btn danger","aria-label":"Delete destination",onclick:async()=>{
+        const nm=name.value||t("this destination")||"this destination";
+        const go=await confirmDialog({title:t("Delete destination?")||"Delete destination?",danger:true,
+          message:(t("Delete")||"Delete")+' "'+nm+'"? '+(t("Save to apply.")||"Save destinations to apply."),
+          confirmText:t("Delete")||"Delete"});
+        if(!go)return;
+        CFG.destinations.splice(i,1);renderDest();setDirty("destinations",true);
+      }},"✕")));
+    on.addEventListener("change",()=>{tr.style.opacity=on.checked?"":".5";updateDestWarn();});
+    tr._d={name,uri,on};b.append(tr);
+  });
+  updateDestWarn();
+  // call form
+  const c=CFG.call,f=$("#callForm");f.innerHTML="";
+  const F={mode:sel(c.mode,[["sequential",t("Sequential (one after another)")],["parallel",t("Parallel (all at once)")]]),
+    ring_timeout:num(c.ring_timeout),max_call_seconds:num(c.max_call_seconds),
+    answer_delay_ms:num(c.answer_delay_ms),hangup_after_eof_ms:num(c.hangup_after_eof_ms)};
+  f.append(field("Paging mode",F.mode),field("Ring timeout (s)",F.ring_timeout),
+    field("Max call length (s)",F.max_call_seconds,"Safety cap"),
+    field("Delay after answer (ms)",F.answer_delay_ms,"Lets the speaker channel open"),
+    field("Hang up after audio (ms)",F.hangup_after_eof_ms));
+  f._fields=F;
+}
+function collectDest(){return [...$("#destBody").querySelectorAll("tr")].filter(tr=>tr._d).map(tr=>({
+  name:tr._d.name.value,uri:tr._d.uri.value,enabled:tr._d.on.checked}));}
+function collectCall(){const F=$("#callForm")._fields;return{mode:F.mode.value,
+  ring_timeout:+F.ring_timeout.value,max_call_seconds:+F.max_call_seconds.value,
+  answer_delay_ms:+F.answer_delay_ms.value,hangup_after_eof_ms:+F.hangup_after_eof_ms.value};}
+
+function renderSchedule(times){
+  const p=CFG.prayer;
+  // ---- time source ----
+  const sf=$("#sourceForm");sf.innerHTML="";
+  const SF={source:sel(p.source||"calculated",[["calculated",t("Calculated (astronomical)")],["manual",t("Manual timetable (uploaded file)")]])};
+  sf.append(field("Prayer time source",SF.source,"Manual uses the file you import below; calculated uses lat/long + method"));
+  sf._fields=SF;
+  const syncManualBox=()=>{$("#manualBox").style.display=SF.source.value==="manual"?"":"none";
+    $("#calcForm").closest(".card").style.opacity=SF.source.value==="manual"?.5:1;};
+  SF.source.addEventListener("change",syncManualBox);syncManualBox();
+  refreshTtStatus();
+  // ---- calculation ----
+  const f=$("#calcForm");f.innerHTML="";
+  const F={method:sel(p.method,METHODS.map(m=>[m,methodLabel(m)])),madhab:sel(p.madhab,[["SHAFI",t("Shafi (standard Asr)")],["HANAFI",t("Hanafi (later Asr)")]]),
+    high:sel(p.high_latitude_rule,[["MIDDLE_OF_THE_NIGHT",t("Middle of the night")],["SEVENTH_OF_THE_NIGHT",t("Seventh of the night")],["TWILIGHT_ANGLE",t("Twilight angle")]])};
+  if(LANG!=="ar"){F.method.classList.add("ltr");}F.high.classList.toggle("ltr",LANG!=="ar");
+  f.append(field("Calculation method",F.method),field("Asr madhab",F.madhab),
+    field("High-latitude rule",F.high));
+  f._fields=F;
+  const b=$("#prayerBody");b.innerHTML="";const adj={},en={},iqen={};
+  const iqp=p.iqama_prayers||{};
+  PRAYERS.forEach(pr=>{
+    const a=num(p.adjustments[pr]??0,{style:"width:90px"}),c=chk(p.enabled_prayers[pr]),ic=chk(iqp[pr]!==false);
+    adj[pr]=a;en[pr]=c;iqen[pr]=ic;
+    b.append(el("tr",{},el("td",{class:"ptbl"},el("span",{class:"picon","aria-hidden":"true"},PRAYER_ICON[pr]||""),prayerLabel(pr)),
+      el("td",{class:"mono"},times?fmtTime(times[pr]):"—"),el("td",{},a),el("td",{},c),el("td",{},ic)));
+  });
+  const iq=CFG.prayer.iqama,inf=$("#iqamaForm");inf.innerHTML="";
+  const IF={enabled:chk(iq.enabled),minutes:num(iq.minutes)};
+  inf.append(field("Enable iqama page",IF.enabled),
+    field("Minutes after adhan",IF.minutes,"Per-prayer iqama files are set on the Audio tab"));
+  $("#prayerBody")._adj=adj;$("#prayerBody")._en=en;$("#prayerBody")._iqen=iqen;$("#iqamaForm")._f=IF;
+}
+function collectPrayer(){const SF=$("#sourceForm")._fields,F=$("#calcForm")._fields,
+  adj=$("#prayerBody")._adj,en=$("#prayerBody")._en,iqen=$("#prayerBody")._iqen,IF=$("#iqamaForm")._f;
+  const adjustments={},enabled_prayers={},iqama_prayers={};
+  PRAYERS.forEach(p=>{adjustments[p]=+adj[p].value;enabled_prayers[p]=en[p].checked;iqama_prayers[p]=iqen[p].checked;});
+  return{source:SF.source.value,method:F.method.value,madhab:F.madhab.value,high_latitude_rule:F.high.value,
+    adjustments,enabled_prayers,iqama_prayers,iqama:{enabled:IF.enabled.checked,minutes:+IF.minutes.value}};}
+
+async function refreshTtStatus(){
+  try{const s=await api("/api/schedule/manual");
+    TT={loaded:!!s.loaded,days:s.days||0};
+    const e=$("#ttStatus");e.innerHTML="";
+    if(s.loaded)e.append(el("span",{class:"badge on"},"✓"),document.createTextNode(" "+(t("Loaded")||"Loaded")+": "+s.days+" "+(t("days in timetable")||"days in timetable")));
+    else e.append(el("span",{class:"empty",style:"display:inline-block;padding:8px 12px"},
+      t("No timetable imported. Import a file or switch to calculated times.")||"No timetable imported. Import a file or switch to calculated times."));
+  }catch(e){TT={loaded:false,days:0};
+    const el2=$("#ttStatus");el2.innerHTML="";
+    el2.append(el("span",{class:"warnmsg",style:"margin:0"},t("Could not load timetable status")||"Could not load timetable status"));}
+}
+
+let LOC={}, COUNTRIES=null, REC_APPLIED=false;
+function flagOf(cc){cc=(cc||"").toUpperCase();if(cc.length!==2||!/^[A-Z]{2}$/.test(cc))return"";
+  return String.fromCodePoint(...[...cc].map(ch=>0x1F1E6+ch.charCodeAt(0)-65));}
+function flagEl(code){const c=(code||"").toLowerCase();
+  if(!/^[a-z]{2}$/.test(c))return el("span",{});
+  return el("span",{class:"fi fi-"+c,role:"img","aria-label":code});}
+function setFoot(){const l=CFG&&CFG.location;if(!l)return;
+  let place;
+  if(l.use_manual)place=t("Manual coordinates")||"Manual coordinates";
+  else{const city=(LANG==="ar"&&l.city_local_name)?l.city_local_name:l.city;
+    const country=(LANG==="ar")?(l.country_local_name||arRegion(l.country_code)||l.country_name):l.country_name;
+    place=[city,country].filter(Boolean).join(LANG==="ar"?"، ":", ");}
+  $("#foot").textContent="v1.6 · "+(place?place+" · ":"")+l.timezone;}
+async function ensureCountries(){
+  if(COUNTRIES)return COUNTRIES;
+  try{COUNTRIES=(await api("/api/geo/countries",undefined,undefined,{timeoutMs:10000})).countries;}
+  catch(e){COUNTRIES=[];}
+  return COUNTRIES;
+}
+// reusable searchable dropdown
+function comboBox({input,list,load,renderItem,onPick}){
+  let items=[],active=-1,timer=null,seq=0;
+  const hide=()=>{list.classList.remove("show");active=-1;};
+  const draw=()=>{
+    list.innerHTML="";
+    if(!items.length){list.append(el("div",{class:"combo-empty"},t("No matches")||"No matches"));list.classList.add("show");return;}
+    items.forEach((it,i)=>{const r=renderItem(it);
+      const flagNode=r.code?flagEl(r.code):(r.flag?el("span",{class:"flag"},r.flag):el("span",{}));
+      list.append(el("div",{class:"combo-item"+(i===active?" active":""),onmousedown:e=>{e.preventDefault();pick(it);}},
+        flagNode,el("span",{class:"nm"},r.name),el("span",{class:"meta ltr"},r.meta||"")));});
+    list.classList.add("show");
+  };
+  const run=async q=>{const my=++seq;const res=await load(q);if(my!==seq)return;items=res||[];active=-1;draw();};
+  const pick=it=>{const v=onPick(it);if(v!=null)input.value=v;hide();};
+  input.addEventListener("input",()=>{if(timer)clearTimeout(timer);timer=setTimeout(()=>run(input.value.trim()),180);});
+  input.addEventListener("focus",()=>run(input.value.trim()));
+  input.addEventListener("blur",()=>setTimeout(hide,160));
+  input.addEventListener("keydown",e=>{
+    if(e.key==="ArrowDown"){active=Math.min(items.length-1,active+1);draw();e.preventDefault();}
+    else if(e.key==="ArrowUp"){active=Math.max(0,active-1);draw();e.preventDefault();}
+    else if(e.key==="Enter"){if(active>=0&&items[active]){e.preventDefault();pick(items[active]);}}
+    else if(e.key==="Escape")hide();
+  });
+  return {clear:()=>{items=[];hide();}};
+}
+
+let SEL={country:null,city:null};
+function arRegion(code){try{return new Intl.DisplayNames(["ar"],{type:"region"}).of((code||"").toUpperCase())||"";}catch(e){return "";}}
+function cName(c){return (LANG==="ar"&&c&&c.local_name)?(c.local_name+" / "+c.name):(c?c.name:"");}
+function cCountry(c){if(!c)return"";const ar=(LANG==="ar")?(c.local_name||arRegion(c.code)):"";return ar?ar+" / "+c.name:c.name;}
+function renderLoc(){
+  const l=CFG.location;
+  LOC={use_manual:(l.use_manual===true)};
+  // restore a previously-saved valid selection (it was picked from the list before)
+  SEL={country:(l.country_code?{code:l.country_code,name:l.country_name||l.country_code,local_name:l.country_local_name||""}:null),
+       city:(l.city?{name:l.city,id:l.city_id||"",region:l.region||"",lat:l.latitude,lng:l.longitude,tz:l.timezone,local_name:l.city_local_name||""}:null)};
+  const host=$("#locForm");host.className="";host.innerHTML="";
+
+  const modeSel=sel(LOC.use_manual?"manual":"city",[["city",t("Select by country / city")],["manual",t("Manual coordinates")]]);
+  host.append(field("Location mode",modeSel));
+
+  const cityBlock=el("div",{});
+  // geo-unavailable warning host
+  const geoWarn=el("div",{});cityBlock.append(geoWarn);
+  // country
+  const countryInput=txt(SEL.country?cCountry(SEL.country):"",{placeholder:t("Select country")||"Select country"});
+  const countryList=el("div",{class:"combo-list"});
+  cityBlock.append(field("Country",el("div",{class:"combo"},countryInput,countryList),"Search by country name or ISO code"));
+  const countryPill=el("div",{class:"sel-pill",style:"display:none"});cityBlock.append(countryPill);
+  // city
+  const cityInput=txt(SEL.city?cName(SEL.city):"",{placeholder:t("Select country first")||"Select country first"});
+  const cityList=el("div",{class:"combo-list"});
+  cityBlock.append(field("City",el("div",{class:"combo"},cityInput,cityList),"Search by city name or alternate/local name"));
+  cityBlock.append(el("div",{class:"hint",style:"margin-top:-4px"},
+    t("City list is based on the bundled offline city database. If your exact location is missing, use Manual coordinates.")||
+    "City list is based on the bundled offline city database. If your exact location is missing, use Manual coordinates."));
+  const summary=el("div",{class:"loc-summary"});
+  const recHost=el("div",{});
+  cityBlock.append(summary,recHost);
+  host.append(cityBlock);
+
+  const latI=num(l.latitude,{step:"any",class:"ltr"}),lngI=num(l.longitude,{step:"any",class:"ltr"}),tzI=txt(l.timezone,{class:"ltr"});
+  const advWrap=el("div",{}),advGrid=el("div",{class:"grid"});
+  advGrid.append(field("Latitude",latI),field("Longitude",lngI),field("Timezone (IANA)",tzI,"e.g. Etc/UTC"));
+  const advTitle=el("div",{class:"adv-toggle"},"⚙ "+(t("Advanced manual override")||"Advanced manual override"));
+  const advNote=el("div",{class:"hint",style:"margin:4px 0"});
+  advWrap.append(advTitle,advNote,advGrid);host.append(advWrap);
+
+  function drawPill(){
+    if(SEL.country){countryPill.style.display="";countryPill.innerHTML="";
+      countryPill.append(flagEl(SEL.country.code),el("span",{},cCountry(SEL.country)));}
+    else countryPill.style.display="none";
+  }
+  function drawSummary(){
+    summary.innerHTML="";
+    let title;
+    if(LOC.use_manual)title=t("Manual coordinates")||"Manual coordinates";
+    else if(SEL.city)title=(cName(SEL.city)+", "+(SEL.country?cCountry(SEL.country):""));
+    else title=t("No location selected")||"No location selected";
+    summary.append(el("div",{class:"row1"},(!LOC.use_manual&&SEL.country)?flagEl(SEL.country.code):el("span",{}),
+      document.createTextNode(title)));
+    const kv=el("div",{class:"kv2"});
+    kv.append(el("span",{class:"k"},t("Latitude")||"Latitude"),el("span",{class:"ltr"},String(latI.value)),
+      el("span",{class:"k"},t("Longitude")||"Longitude"),el("span",{class:"ltr"},String(lngI.value)),
+      el("span",{class:"k"},t("Timezone")||"Timezone"),el("span",{class:"ltr"},String(tzI.value)));
+    summary.append(kv);
+  }
+  function showRecommended(method){
+    recHost.innerHTML="";
+    if(!method||method===CFG.prayer.method)return;
+    const b=el("div",{class:"rec-banner"});
+    b.append(el("span",{},(t("Recommended calculation method")||"Recommended calculation method")+": "),el("b",{},methodLabel(method)));
+    const acts=el("div",{class:"acts"});
+    acts.append(el("button",{class:"btn",onclick:()=>{CFG.prayer.method=method;REC_APPLIED=true;setDirty("prayer",true);
+        hydrate(()=>renderSchedule(null));recHost.innerHTML="";
+        toast(t("Recommended method applied. Remember to save both Location and Schedule.")||"Recommended method applied. Save both Location and Schedule.");}},
+      t("Apply recommended")||"Apply recommended"),
+      el("button",{class:"btn ghost",onclick:()=>recHost.innerHTML=""},t("Keep current method")||"Keep current method"));
+    b.append(acts);recHost.append(b);
+  }
+  function setCityEnabled(on){
+    cityInput.disabled=!on;
+    cityInput.placeholder=on?(t("Search city")||"Search city"):(t("Select country first")||"Select country first");
+  }
+
+  const cityCombo=comboBox({input:cityInput,list:cityList,
+    load:async q=>{if(!SEL.country)return [];
+      try{const r=await api("/api/geo/cities?country="+encodeURIComponent(SEL.country.code)+"&q="+encodeURIComponent(q)+"&limit=50");
+        LOC._rec=r.recommended_method;return r.cities;}catch(e){return [];}},
+    renderItem:c=>({name:cName(c)+(c.region?" · "+c.region:""),meta:c.tz}),
+    onPick:c=>{SEL.city={name:c.name,id:c.id||"",region:c.region,lat:c.lat,lng:c.lng,tz:c.tz,local_name:c.local_name||""};
+      latI.value=c.lat;lngI.value=c.lng;tzI.value=c.tz;drawSummary();setDirty("location",true);
+      showRecommended(LOC._rec);return cName(c);}});
+  // typing after a pick invalidates the city selection
+  cityInput.addEventListener("input",()=>{if(SEL.city&&cityInput.value.trim()!==cName(SEL.city)){SEL.city=null;drawSummary();}});
+
+  ensureCountries().then(list=>{
+    if(!list||!list.length){
+      geoWarn.innerHTML="";
+      geoWarn.append(el("div",{class:"banner stale"},
+        t("Location database is unavailable. Use manual coordinates or check installation.")||
+        "Location database is unavailable. Use manual coordinates or check installation."));
+    }
+    comboBox({input:countryInput,list:countryList,
+      load:async q=>{const all=await ensureCountries();q=q.toLowerCase();
+        return all.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.local_name&&c.local_name.includes(q))||(arRegion(c.code)&&arRegion(c.code).includes(q))||c.code.toLowerCase()===q).slice(0,80);},
+      renderItem:c=>({code:c.code,name:cCountry(c),meta:c.code}),
+      onPick:c=>{SEL.country={code:c.code,name:c.name,local_name:c.local_name||arRegion(c.code)||""};SEL.city=null;
+        cityInput.value="";cityCombo.clear();setCityEnabled(true);drawPill();drawSummary();setDirty("location",true);
+        api("/api/geo/cities?country="+encodeURIComponent(c.code)+"&q=&limit=1").then(r=>showRecommended(r.recommended_method)).catch(()=>{});
+        return cCountry(SEL.country);}});
+  });
+  // typing after a pick invalidates the country selection (and dependent city)
+  countryInput.addEventListener("input",()=>{if(SEL.country&&countryInput.value.trim()!==cCountry(SEL.country)){
+    SEL.country=null;SEL.city=null;cityInput.value="";setCityEnabled(false);drawPill();drawSummary();}});
+
+  drawPill();setCityEnabled(!!SEL.country);drawSummary();
+  [latI,lngI,tzI].forEach(inp=>inp.addEventListener("input",drawSummary));
+  let advOpen=false;
+  function applyMode(){
+    LOC.use_manual=(modeSel.value==="manual");
+    cityBlock.style.display=LOC.use_manual?"none":"";
+    // In city mode the coordinates come from the selected city and must not be edited
+    // (otherwise the edit would be silently ignored on save). Manual mode unlocks them.
+    [latI,lngI,tzI].forEach(inp=>{inp.readOnly=!LOC.use_manual;inp.classList.toggle("ro",!LOC.use_manual);});
+    if(LOC.use_manual){advTitle.textContent="⚙ "+(t("Manual coordinates")||"Manual coordinates");advNote.textContent="";advNote.style.display="none";
+      advGrid.style.display="";advTitle.style.display="none";}
+    else{advTitle.textContent="⚙ "+(t("Coordinates from selected city")||"Coordinates from selected city");
+      advNote.textContent=t("These come from the selected city. To edit them, switch Location mode to Manual coordinates.")||"These come from the selected city. To edit them, switch Location mode to Manual coordinates.";
+      advNote.style.display=advOpen?"":"none";
+      advGrid.style.display=advOpen?"":"none";advTitle.style.display="";}
+    drawSummary();
+  }
+  advTitle.addEventListener("click",()=>{advOpen=!advOpen;applyMode();});
+  modeSel.addEventListener("change",()=>{applyMode();setDirty("location",true);});
+  applyMode();
+
+  host._fields={latitude:latI,longitude:lngI,timezone:tzI,_mode:modeSel,_country:countryInput,_city:cityInput};
+}
+function collectLoc(){const F=$("#locForm")._fields;
+  if(!LOC.use_manual&&SEL.country&&SEL.city){
+    return{latitude:SEL.city.lat,longitude:SEL.city.lng,timezone:SEL.city.tz,
+      country_code:SEL.country.code,country_name:SEL.country.name,country_local_name:SEL.country.local_name||"",
+      city:SEL.city.name,city_id:SEL.city.id||"",city_local_name:SEL.city.local_name||"",region:SEL.city.region||"",use_manual:false};
+  }
+  return{latitude:+F.latitude.value,longitude:+F.longitude.value,timezone:F.timezone.value,
+    country_code:SEL.country?SEL.country.code:"",country_name:SEL.country?SEL.country.name:"",
+    country_local_name:SEL.country?(SEL.country.local_name||""):"",
+    city:SEL.city?SEL.city.name:"",city_id:SEL.city?(SEL.city.id||""):"",city_local_name:SEL.city?(SEL.city.local_name||""):"",
+    region:SEL.city?(SEL.city.region||""):"",use_manual:true};}
+
+function renderCodecs(){
+  const c=CFG.codecs.priorities,f=$("#codecForm");f.innerHTML="";const F={};
+  const head=el("div",{class:"codecrow",style:"color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.06em"},
+    el("span",{},t("Codec")),el("span",{style:"text-align:center"},t("Enabled")),el("span",{},t("Priority (0 = off, higher = preferred)")));
+  f.append(head);
+  Object.entries(c).forEach(([id,prio])=>{
+    const on=el("input",{type:"checkbox",...(prio>0?{checked:""}:{})});
+    const range=el("input",{type:"range",min:1,max:254,value:prio>0?prio:200});
+    const valv=el("input",{type:"number",min:0,max:254,value:prio,style:"width:80px"});
+    const syncFromRange=()=>{valv.value=on.checked?range.value:0;};
+    const syncFromVal=()=>{const v=+valv.value;on.checked=v>0;if(v>0)range.value=v;};
+    range.addEventListener("input",()=>{on.checked=true;syncFromRange();});
+    valv.addEventListener("input",syncFromVal);
+    on.addEventListener("change",()=>{valv.value=on.checked?(range.value||200):0;});
+    F[id]={on,range,valv};
+    f.append(el("div",{class:"codecrow"},el("span",{class:"mono"},id),
+      el("span",{style:"text-align:center"},on),el("div",{class:"row"},valv,range)));
+  });
+  f._fields=F;
+}
+function collectCodecs(){const F=$("#codecForm")._fields,priorities={};
+  Object.entries(F).forEach(([id,o])=>priorities[id]=o.on.checked?Math.max(1,+o.valv.value||1):0);return{priorities};}
+
+function renderNtp(){
+  const n=CFG.ntp,f=$("#ntpForm");f.innerHTML="";
+  const F={enabled:chk(n.enabled),server:txt(n.server,{class:"ltr"}),sync_interval_min:num(n.sync_interval_min),
+    set_system_clock:chk(n.set_system_clock)};
+  f.append(field("NTP enabled",F.enabled),field("NTP server",F.server),
+    field("Sync interval (min)",F.sync_interval_min),field("Set system clock",F.set_system_clock));
+  f._fields=F;
+}
+function collectNtp(){const F=$("#ntpForm")._fields;return{enabled:F.enabled.checked,server:F.server.value,
+  sync_interval_min:+F.sync_interval_min.value,set_system_clock:F.set_system_clock.checked};}
+
+// ---- audio tab ----
+async function loadAudio(){
+  let d;try{d=await api("/api/audio");}catch(e){toast((t("Could not load audio")||"Could not load audio")+": "+e.message,true);return;}
+  const files=d.files,a=d.assignments;AUDIO_FILES=files;
+  const b=$("#audioBody");b.innerHTML="";
+  if(!files.length){
+    b.append(el("tr",{},el("td",{colspan:4},
+      el("div",{class:"empty"},t("No audio files uploaded yet. Upload an audio file to assign it to a prayer.")||"No audio files uploaded yet. Upload an audio file to assign it to a prayer."))));
+  }
+  files.forEach(file=>{
+    const testBtn=el("button",{class:"btn ghost",style:"margin-inline-end:6px",onclick:(e)=>
+      runTest({file:file.name},e.target.closest("button"))},"▶ "+(t("Test")||"Test"));
+    const delBtn=el("button",{class:"btn danger","aria-label":"Delete "+file.name,onclick:async()=>{
+      const go=await confirmDialog({title:t("Delete audio file?")||"Delete audio file?",danger:true,
+        message:(t("Delete")||"Delete")+' "'+file.name+'"? '+(t("This cannot be undone.")||"This cannot be undone."),
+        confirmText:t("Delete")||"Delete"});
+      if(!go)return;
+      try{await api("/api/audio/"+encodeURIComponent(file.name),"DELETE");toast(t("Deleted")||"Deleted");loadAudio();}
+      catch(e){toast((t("Delete failed")||"Delete failed")+": "+e.message,true);}
+    }},"✕");
+    b.append(el("tr",{},el("td",{class:"mono"},file.name),
+      el("td",{class:"mono"},file.duration?file.duration+(LANG==="ar"?" ث":"s"):"—"),
+      el("td",{class:"mono small"},file.playable?`${file.rate||"?"}Hz/${file.channels||"?"}ch`:el("span",{style:"color:var(--warn)"},t("not WAV")||"not WAV")),
+      el("td",{style:"white-space:nowrap"},testBtn,delBtn)));
+  });
+  const names=new Set(files.map(f=>f.name));
+  const prevH=HYDRATING;HYDRATING=true;
+  try{
+  const opts=[["","— "+(t("none")||"none")+" —"],...files.map(f=>[f.name,f.name])];
+  const f=$("#assignForm");f.innerHTML="";const F={};
+  F.default_file=sel(a.default_file,opts);
+  F.use_global_for_all=chk(a.use_global_for_all);
+  const dw=field("Default Adhan",F.default_file,"Used when a prayer has no specific file");
+  if(a.default_file&&!names.has(a.default_file))dw.append(el("div",{class:"warnmsg"},t("Assigned file is missing from the library.")||"Assigned file is missing from the library."));
+  f.append(dw,field("Use this one file for ALL adhans",F.use_global_for_all,"Overrides the per-prayer adhan files below"));
+  F.per={};
+  PRAYERS.forEach(p=>{F.per[p]=sel(a.per_prayer[p],opts);const w=field(t("Adhan")+" · "+prayerLabel(p),F.per[p]);
+    if(a.per_prayer[p]&&!names.has(a.per_prayer[p]))w.append(el("div",{class:"warnmsg"},t("Assigned file is missing.")||"Assigned file is missing."));
+    f.append(w);});
+  F.iqama_file=sel(a.iqama_file,opts);
+  f.append(field("Iqama audio (default)",F.iqama_file,"Used when a prayer has no specific iqama file"));
+  F.iqper={};const iqp=a.iqama_per_prayer||{};
+  PRAYERS.forEach(p=>{F.iqper[p]=sel(iqp[p],opts);f.append(field(t("Iqama")+" · "+prayerLabel(p),F.iqper[p]));});
+  F.target_rate=sel(a.target_rate,[[8000,"8000 Hz (G.711 narrowband)"],[16000,"16000 Hz (G.722 wideband)"],
+    [32000,"32000 Hz (Opus / super-wideband)"],[48000,"48000 Hz (Opus fullband, best quality)"]]);
+  F.gain_db=num(a.gain_db,{step:"any"});
+  f.append(field("Resample target",F.target_rate),field("Volume gain (dB)",F.gain_db));
+  f._fields=F;
+  }finally{HYDRATING=prevH;}
+  if(STATUS)renderHealth();
+}
+function collectAudio(){const F=$("#assignForm")._fields,per_prayer={},iqama_per_prayer={};
+  PRAYERS.forEach(p=>{per_prayer[p]=F.per[p].value;iqama_per_prayer[p]=F.iqper[p].value;});
+  return{default_file:F.default_file.value,use_global_for_all:F.use_global_for_all.checked,per_prayer,
+    iqama_file:F.iqama_file.value,iqama_per_prayer,
+    target_rate:+F.target_rate.value,gain_db:+F.gain_db.value};}
+
+// ---- save dispatch ----
+const COLLECT={sip:collectSip,destinations:collectDest,call:collectCall,prayer:collectPrayer,
+  location:collectLoc,codecs:collectCodecs,ntp:collectNtp,audio:collectAudio};
+async function save(section,btn){
+  // validate first; don't wipe user input on failure
+  if(!validateSection(section)){
+    toast(t("Please fix the highlighted fields")||"Please fix the highlighted fields",true);
+    const tab=SECTION_TAB[section];if(tab)show(tab);return;
+  }
+  try{
+    const data=COLLECT[section]();
+    await withBtn(btn,async()=>{
+      const r=await api("/api/config/"+section,"POST",{data},{timeoutMs:20000});
+      CFG=r.config;
+    },t("Saving…")||"Saving…");
+    setDirty(section,false);
+    setFoot();
+    toast((section==="sip"||section==="codecs")?(t("Saved · reconnecting SIP")||"Saved · reconnecting SIP"):(t("Saved")||"Saved"));
+    if(section==="destinations"&&!(CFG.destinations||[]).some(x=>x.enabled))
+      setTimeout(()=>toast(t("Saved, but no destinations are enabled — paging will not run.")||"Saved, but no destinations are enabled — paging will not run.",true),900);
+    refreshStatus();
+  }catch(e){
+    if(e.message==="__timeout__")toast(t("Request timed out — check status and try again.")||"Request timed out — check status and try again.",true);
+    else toast((t("Save failed")||"Save failed")+": "+e.message,true);
+  }
+}
+
+// ---- status polling ----
+function statusDot(ok,warn){return ok?"good":(warn?"warn":"bad");}
+async function refreshStatus(){
+  try{
+    STATUS=await api("/api/status",undefined,undefined,{timeoutMs:10000});
+    LAST_OK_TS=Date.now();STALE=false;
+    TZ=STATUS.timezone;$("#tzlabel").textContent=TZ;
+    const s=STATUS.sip,n=STATUS.ntp,ac=STATUS.active_call;
+    const pills=$("#pills");pills.innerHTML="";
+    const sipOk=s.available&&s.running&&s.registered;
+    const sipWarn=s.available&&s.running&&!s.registered;
+    if(ac){
+      pills.append(el("span",{class:"pill click",onclick:()=>show("dashboard")},
+        el("span",{class:"livedot"}),t("On the line now")));
+    }
+    pills.append(
+      el("span",{class:"pill"},el("span",{class:"dot "+statusDot(sipOk,sipWarn)}),
+        s.available?(s.registered?"SIP "+okword(true):(s.running?"SIP "+okword(false):"SIP "+(t("stopped")||"stopped"))):"SIP "+(t("n/a")||"n/a")),
+      el("span",{class:"pill"},el("span",{class:"dot "+(n.error?"bad":(n.synced?"good":"warn"))}),
+        "NTP "+(n.offset_ms!=null?n.offset_ms+"ms":"—")),
+      el("span",{class:"pill"},el("span",{class:"dot "+(STATUS.ffmpeg?"good":"warn")}),"ffmpeg "+(STATUS.ffmpeg?(t("ok")||"ok"):(t("missing")||"missing"))));
+    // dashboard banner
+    const db=$("#dashBanner");db.innerHTML="";
+    if(!STATUS.sip_available)db.append(el("div",{class:"banner"},
+      t("SIP library (pjsua2) is not loaded — paging is disabled. You can still edit all settings in this mode.")
+      ||"SIP library (pjsua2) is not loaded — paging is disabled. You can still edit all settings in this mode."));
+    renderActiveCall(ac);
+    renderNtpStatus(n);
+    renderHealth();
+    // last page
+    const lp=STATUS.last_page,lpe=$("#lastPage");
+    if(lp){lpe.innerHTML="";lpe.append(
+      el("div",{},prayerLabel(lp.prayer)+" ("+kindLabel(lp.kind)+") · "+new Date(lp.time).toLocaleString()),
+      el("div",{style:"color:"+(lp.ok?"var(--good)":"var(--bad)")},
+        lp.ok?"✓ "+t("completed"):"✗ "+(lp.error||t("failed")||"failed")),
+      el("div",{class:"muted small"},"→ "+(lp.destinations||[]).join(", ")));}
+    else{lpe.textContent=t("No page yet.")||"No page yet.";}
+    renderDashboard();
+    renderFreshness();
+  }catch(e){
+    // backend unreachable after initial load — surface it, keep last known data labelled stale
+    STALE=true;
+    renderFreshness();
+  }
+}
+function renderFreshness(){
+  const lu=$("#lastUpdated");
+  const tlabel=LAST_OK_TS?new Date(LAST_OK_TS).toLocaleTimeString([], {timeZone:TZ}):"—";
+  if(lu){
+    lu.textContent=(t("Last updated")||"Last updated")+": "+tlabel+
+      (STALE?" · "+(t("connection lost")||"connection lost"):"");
+    lu.style.color=STALE?"var(--bad)":"var(--dim)";
+  }
+  // stale banner on dashboard
+  const db=$("#dashBanner");if(db){
+    let b=db.querySelector(".banner.stale");
+    if(STALE){
+      const msg=(t("Backend connection lost. Showing last known status from")||"Backend connection lost. Showing last known status from")+" "+tlabel+".";
+      if(!b){b=el("div",{class:"banner stale"});db.prepend(b);}
+      b.textContent=msg;
+    }else if(b){b.remove();}
+  }
+  // mark the API health cell stale
+  const apiCell=document.querySelector("#healthGrid .hcell");
+  if(apiCell&&STALE){const dot=apiCell.querySelector(".hd");if(dot){dot.className="hd bad";}
+    const v=apiCell.querySelector(".hv");if(v)v.textContent=t("Offline / stale")||"Offline / stale";}
+}
+function okword(reg){return reg?t("Registered"):t("Not registered");}
+function renderActiveCall(ac){
+  const card=$("#callCard");
+  const stopBtn=$("#btnStopCall");
+  if(!ac){
+    card.classList.remove("live");
+    // fully clear stale values so nothing from the last call lingers
+    const ttl=card.querySelector(".ttl span:last-child");if(ttl)ttl.textContent=t("No active call")||"No active call";
+    $("#callLabel").textContent="—";$("#callDest").textContent="—";$("#callCodec").textContent="—";
+    $("#callElapsed").textContent="—";$("#callRemain").textContent="—";$("#callBar").style.width="0%";
+    $("#callUpdated").textContent="";
+    if(stopBtn)stopBtn.style.display="none";
+    return;
+  }
+  card.classList.add("live");
+  if(stopBtn)stopBtn.style.display="";
+  let state=t("Dialing")||"Dialing";
+  if(ac.stopping)state=t("Stopping")||"Stopping";
+  else if(ac.connected)state=(ac.remaining_s!=null&&ac.remaining_s<=0)?(t("Finishing")||"Finishing"):(t("Playing")||"Playing");
+  const ttl=card.querySelector(".ttl span:last-child");if(ttl)ttl.textContent=(t("On the line now")||"On the line now")+" · "+state;
+  $("#callLabel").textContent=localizeText(ac.label)||"—";
+  $("#callDest").textContent=(ac.destinations||[]).join(", ")||"—";
+  $("#callCodec").textContent=ac.codec||(ac.connected?"…":t("ringing")||"ringing");
+  $("#callElapsed").textContent=fmtDur(ac.elapsed_s);
+  $("#callRemain").textContent=ac.remaining_s!=null?fmtDur(ac.remaining_s):"—";
+  let pct=0;
+  if(ac.duration&&ac.elapsed_s!=null)pct=Math.max(0,Math.min(100,100*ac.elapsed_s/ac.duration));
+  $("#callBar").style.width=pct+"%";
+  if(LAST_OK_TS)$("#callUpdated").textContent=(t("updated")||"updated")+" "+new Date(LAST_OK_TS).toLocaleTimeString([], {timeZone:TZ});
+}
+function renderNtpStatus(n){
+  const kv=$("#ntpKv");if(!kv)return;kv.innerHTML="";
+  const rows=[
+    [t("Server"),n.server||"—"],
+    [t("Offset"),n.offset_ms!=null?n.offset_ms+" ms":"—"],
+    [t("Stratum"),n.stratum!=null?(n.stratum+(n.stratum_text?"  ("+n.stratum_text+")":"")):"—"],
+    [t("Reference"),n.ref_id||"—"],
+    [t("Round-trip"),n.round_trip_ms!=null?n.round_trip_ms+" ms":"—"],
+    [t("Root delay"),n.root_delay_ms!=null?n.root_delay_ms+" ms":"—"],
+    [t("Root dispersion"),n.root_dispersion_ms!=null?n.root_dispersion_ms+" ms":"—"],
+    [t("Last sync"),n.last_sync?new Date(n.last_sync).toLocaleString():t("never")],
+    [t("Next sync"),n.next_sync?new Date(n.next_sync).toLocaleString():"—"],
+    [t("System time"),n.system_time?new Date(n.system_time).toLocaleString():"—"],
+  ];
+  if(n.error)rows.push(["error",n.error]);
+  rows.forEach(([k,v])=>{kv.append(el("div",{class:"k"},k),el("div",{class:"mono"},String(v)));});
+}
+function hcell(state,title,value){
+  return el("div",{class:"hcell"},el("span",{class:"hd "+state}),
+    el("div",{},el("div",{class:"ht"},title),el("div",{class:"hv"},value)));
+}
+function renderHealth(){
+  const g=$("#healthGrid");if(!g||!STATUS)return;g.innerHTML="";
+  const s=STATUS.sip,n=STATUS.ntp,ac=STATUS.active_call;
+  // API (we have STATUS → reachable, unless polling is currently failing)
+  g.append(hcell(STALE?"bad":"good",t("Backend / API"),
+    STALE?(t("Offline / stale")||"Offline / stale"):(t("Reachable")||"Reachable")));
+  // SIP
+  if(!s.available)g.append(hcell("warn","SIP",t("Library not loaded")||"n/a"));
+  else if(s.registered)g.append(hcell("good","SIP",t("Registered")||"Registered"));
+  else if(s.running)g.append(hcell("warn","SIP",t("Not registered")||"Not registered"));
+  else g.append(hcell("bad","SIP",t("Stopped")||"Stopped"));
+  // paging destinations readiness
+  const enDest=(CFG&&CFG.destinations||[]).filter(x=>x.enabled).length;
+  g.append(hcell(enDest?"good":"bad",t("Destinations"),
+    enDest?(enDest+" "+(t("enabled")||"enabled")):(t("None — paging will not run")||"None — paging will not run")));
+  // NTP
+  g.append(hcell(n.error?"bad":(n.synced?"good":"warn"),t("Time sync"),
+    n.synced?(t("Synced")||"Synced")+" ("+(n.offset_ms!=null?n.offset_ms+"ms":"")+")":(n.error?(t("Failed")||"Failed"):(t("Not synced")||"Not synced"))));
+  // schedule mode
+  const src=CFG&&CFG.prayer&&CFG.prayer.source;
+  if(src==="manual")g.append(hcell(TT.loaded?"good":"bad",t("Schedule"),
+    TT.loaded?(t("Manual")||"Manual")+" · "+TT.days+"d":(t("No timetable imported")||"No timetable")));
+  else g.append(hcell("good",t("Schedule"),t("Calculated")||"Calculated"));
+  // next page
+  const up=(STATUS.upcoming||[]).filter(u=>u.kind==="adhan");
+  g.append(hcell(up.length?"good":"warn",t("Next page"),
+    up.length?prayerLabel(up[0].prayer)+" "+fmtTime(up[0].run_at):(t("None scheduled")||"None")));
+  // active call
+  g.append(hcell(ac?"good":"warn",t("Active call"),ac?(localizeText(ac.label)||t("In progress")||"In progress"):(t("No active call")||"No active call")));
+  // audio assignment
+  const a=CFG&&CFG.audio;
+  const haveAudio=AUDIO_FILES.length>0;
+  const assigned=a&&(a.use_global_for_all?a.default_file:(a.default_file||PRAYERS.some(p=>a.per_prayer&&a.per_prayer[p])));
+  g.append(hcell(!haveAudio?"bad":(assigned?"good":"warn"),t("Audio"),
+    !haveAudio?(t("No files")||"No files"):(assigned?(t("Assigned")||"Assigned"):(t("Unassigned")||"Unassigned"))));
+  // timezone
+  g.append(hcell("good",t("Timezone"),STATUS.timezone||"—"));
+  // last error
+  if(STATUS.last_page&&!STATUS.last_page.ok)
+    g.append(hcell("bad",t("Last page"),"✗ "+(STATUS.last_page.error||"failed")));
+}
+function renderDashboard(){
+  if(!STATUS)return;
+  const up=STATUS.upcoming||[];
+  const adhan=up.filter(u=>u.kind==="adhan");
+  const nameEl=$("#nextName");
+  if(adhan.length){
+    const nx=adhan[0];NEXT_RUN=nx.run_at;
+    nameEl.textContent=(PRAYER_ICON[nx.prayer]?PRAYER_ICON[nx.prayer]+" ":"")+prayerLabel(nx.prayer);
+    updateCountdown();
+  }else{NEXT_RUN=null;nameEl.textContent=t("No more today");$("#nextCd").textContent=t("Next pages at 00:01 refresh")||"—";}
+}
+function hms(sec){sec=Math.max(0,Math.floor(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
+  const p=n=>String(n).padStart(2,"0");return p(h)+":"+p(m)+":"+p(s);}
+function updateCountdown(){
+  const cd=$("#nextCd");if(!cd||!NEXT_RUN)return;
+  const diff=(new Date(NEXT_RUN)-Date.now())/1000;
+  const at=fmtTime(NEXT_RUN);
+  cd.textContent=diff<=0?(at+"  ·  "+(t("now")||"now")):(at+"  ·  "+(t("in")||"in")+" "+hms(diff));
+}
+function countdown(iso){const diff=new Date(iso)-Date.now();if(diff<0)return"now";
+  const h=Math.floor(diff/3.6e6),m=Math.floor(diff%3.6e6/6e4);return (h?h+"h ":"")+m+"m";}
+
+async function loadTimeline(){
+  try{
+    const d=await api("/api/prayer-times");
+    const tl=$("#timeline");tl.innerHTML="";
+    const now=Date.now();let nextIdx=PRAYERS.findIndex(p=>d.times[p]&&new Date(d.times[p])>now);
+    PRAYERS.forEach((p,i)=>{
+      const off=!d.enabled[p]||!d.times[p];
+      tl.append(el("div",{class:"slot"+(i===nextIdx?" now":"")+(off?" off":"")},
+        el("div",{class:"p"},el("span",{class:"picon","aria-hidden":"true"},PRAYER_ICON[p]||""),prayerLabel(p)),
+        el("div",{class:"t mono"},fmtTime(d.times[p]))));
+    });
+    // test prayer select — rebuild in current language, single-language labels
+    const tp=$("#testPrayer");const cur=tp.value;tp.innerHTML="";
+    PRAYERS.forEach(p=>tp.append(el("option",{value:p},prayerLabel(p))));
+    if(cur)tp.value=cur;
+    // schedule table times (skip if user has unsaved schedule edits)
+    if(!DIRTY.has("prayer"))hydrate(()=>renderSchedule(d.times));
+    timelineWarn(false);
+  }catch(e){timelineWarn(true);}
+}
+function timelineWarn(on){
+  const tl=$("#timeline");if(!tl)return;
+  let w=tl.querySelector(".tlwarn");
+  if(on){
+    if(!w){w=el("div",{class:"tlwarn warnmsg",style:"grid-column:1/-1"},
+      t("Could not load prayer timeline. Showing last known values.")||"Could not load prayer timeline. Showing last known values.");
+      tl.prepend(w);}
+  }else if(w){w.remove();}
+}
+
+// ---- clock ----
+function tickClock(){const now=new Date();
+  $("#clock").textContent=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:TZ});
+  $("#dateline").textContent=now.toLocaleDateString(LANG==="ar"?"ar":[], {weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:TZ});
+  updateCountdown();}
+
+// ---- theme ----
+let _mql=null;
+function applyTheme(mode){
+  let m=mode;
+  if(mode==="auto"){m=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";}
+  document.documentElement.setAttribute("data-theme",m);
+}
+function setTheme(mode){
+  try{localStorage.setItem("ap_theme",mode);}catch(e){}
+  if(_mql){_mql.onchange=null;_mql=null;}
+  if(mode==="auto"&&window.matchMedia){_mql=window.matchMedia("(prefers-color-scheme: light)");_mql.onchange=()=>applyTheme("auto");}
+  applyTheme(mode);
+}
+// ---- language ----
+function applyI18n(){
+  document.querySelectorAll("[data-i18n]").forEach(n=>{
+    const key=n.getAttribute("data-i18n");
+    // only translate elements whose text is the key (labels/headers/buttons), keep child nodes for nav
+    if(n.classList.contains("nav")||false){}
+    if(n.children.length===0){n.textContent=t(key);}
+    else{
+      // nav buttons: last text node
+      const tn=[...n.childNodes].find(c=>c.nodeType===3&&c.textContent.trim().length);
+      if(tn)tn.textContent=t(key); else n.lastChild&&(n.lastChild.textContent=t(key));
+    }
+  });
+}
+function setHelpTexts(){
+  const tok=s=>'<span class="mono ltr">'+s+'</span>';
+  const tt=$("#ttFormatHelp");
+  if(tt){tt.innerHTML = LANG==="ar"
+    ? "صيغة الملف: كتل متكررة تبدأ بـ "+tok("Date : YYYY-MM-DD")+" ثم أوقات الصلوات بصيغة "+tok("Fajr/Dhuhr/Asr/Maghrib/Isha : HH:MM:SS")+". اترك الوقت فارغاً لتخطّي الصلاة. تتكرر الأوقات سنوياً حسب الشهر واليوم."
+    : "File format: repeating blocks of "+tok("Date : YYYY-MM-DD")+" then "+tok("Fajr/Dhuhr/Asr/Maghrib/Isha : HH:MM:SS")+". A blank time skips that prayer. Times repeat every year by month-day.";}
+  const ch=$("#codecHelp");
+  if(ch){ch.textContent = LANG==="ar"
+    ? "يوفّر G722 صوتاً واسع النطاق 16 kHz إذا كان نظام PBX والسماعات يدعمونه؛ أما G.711 مثل PCMA/PCMU فهو الأكثر توافقاً."
+    : "G722 gives wideband (16 kHz) audio if your PBX and speakers support it; G.711 (PCMA/PCMU) is universal.";}
+}
+function setLang(lang){
+  LANG=lang;
+  try{localStorage.setItem("ap_lang",lang);}catch(e){}
+  document.documentElement.setAttribute("lang",lang);
+  document.documentElement.setAttribute("dir",lang==="ar"?"rtl":"ltr");
+  applyI18n();
+  setHelpTexts();
+  setFoot();
+  // re-render dynamic forms so their labels translate (guarded: not a user edit)
+  if(CFG)hydrate(()=>{renderSip();renderDest();renderLoc();renderCodecs();renderNtp();
+    if(STATUS){renderNtpStatus(STATUS.ntp);renderActiveCall(STATUS.active_call);renderDashboard();renderHealth();renderFreshness();}
+    loadTimeline();if($("#audioBody"))loadAudio();});
+  tickClock();
+}
+
+// ---- logs ----
+let _logTimer=null;
+function applyLogFilter(lines){
+  const f=$("#logFilter").value;if(f==="all")return lines;
+  const sev=["ERROR","WARNING","INFO"];
+  if(sev.includes(f))return lines.filter(l=>l.includes(" "+f+" "));
+  // component filters match logger name token e.g. "scheduler:"
+  return lines.filter(l=>l.toLowerCase().includes(f.toLowerCase()));
+}
+async function loadLogs(){
+  const box=$("#logBox");
+  // preserve scroll unless user is at/near the bottom
+  const atBottom=box.scrollHeight-box.scrollTop-box.clientHeight<40;
+  try{
+    const d=await api("/api/logs?limit=600");
+    const lines=applyLogFilter(d.lines||[]);
+    if(!lines.length){box.innerHTML="";box.append(el("div",{class:"empty"},
+      t("No log entries to show.")||"No log entries to show."));return;}
+    box.textContent=lines.join("\n");
+    if($("#logAuto").checked&&atBottom)box.scrollTop=box.scrollHeight;
+  }catch(e){box.textContent="";box.append(el("div",{class:"empty",style:"color:var(--bad)"},
+    (t("Could not load logs")||"Could not load logs")+": "+e.message));}
+}
+function setLogLive(on){
+  if(_logTimer){clearInterval(_logTimer);_logTimer=null;}
+  if(on)_logTimer=setInterval(loadLogs,2000);
+}
+
+// ---- config load with error overlay ----
+async function loadConfig(){
+  try{
+    CFG=await api("/api/config");
+    $("#bootError").classList.remove("show");
+    return true;
+  }catch(e){
+    $("#bootErrDet").textContent=e.message||"unknown error";
+    $("#bootError").classList.add("show");
+    return false;
+  }
+}
+
+// ---- init ----
+async function init(){
+  let savedTheme="auto",savedLang="en";
+  try{savedTheme=localStorage.getItem("ap_theme")||"auto";savedLang=localStorage.getItem("ap_lang")||"en";}catch(e){}
+  LANG=savedLang;
+  buildNav();
+  $("#themeSel").value=savedTheme;setTheme(savedTheme);
+  $("#langSel").value=savedLang;
+  $("#bootRetry").addEventListener("click",()=>{$("#bootRetry").disabled=true;
+    boot().finally(()=>$("#bootRetry").disabled=false);});
+  $("#themeSel").addEventListener("change",e=>setTheme(e.target.value));
+  $("#langSel").addEventListener("change",async e=>{
+    if(DIRTY.size){
+      e.target.value=LANG;   // revert the selector
+      await confirmDialog({title:t("Unsaved changes")||"Unsaved changes",
+        message:t("Save or discard your changes before changing the language.")||"Save or discard your changes before changing the language.",
+        confirmText:t("Go to unsaved section")||"Go to unsaved section"}).then(go=>{if(go)gotoFirstDirty();});
+      return;
+    }
+    setLang(e.target.value);
+  });
+  // unsaved-changes guard
+  window.addEventListener("beforeunload",e=>{if(DIRTY.size){e.preventDefault();e.returnValue="";}});
+  await boot();
+  setInterval(tickClock,1000);tickClock();
+  setInterval(()=>{refreshStatus();
+    if(document.querySelector('.panel[data-tab="logs"]').classList.contains("active")&&!_logTimer)loadLogs();},3000);
+  setInterval(loadTimeline,60000);
+}
+
+async function boot(){
+  if(!await loadConfig())return;
+  setFoot();
+  hydrate(()=>{renderSip();renderDest();renderLoc();renderCodecs();renderNtp();renderSchedule(null);});
+  setLang(LANG);                 // applies dir/i18n + re-renders (hydration-guarded internally)
+  applyI18n();
+  // dirty watchers (containers persist; attach once)
+  watchDirty("#sipForm","sip");watchDirty("#destBody","destinations");watchDirty("#callForm","call");
+  watchDirty("#sourceForm","prayer");watchDirty("#calcForm","prayer");watchDirty("#prayerBody","prayer");
+  watchDirty("#iqamaForm","prayer");watchDirty("#locForm","location");watchDirty("#codecForm","codecs");
+  watchDirty("#ntpForm","ntp");watchDirty("#assignForm","audio");
+  await refreshStatus();await loadTimeline();
+  wireActions();
+}
+
+let _wired=false;
+function wireActions(){
+  if(_wired)return;_wired=true;
+  document.querySelectorAll("[data-save]").forEach(b=>b.addEventListener("click",()=>save(b.dataset.save,b)));
+  $("#btnAddDest").addEventListener("click",()=>{CFG.destinations.push({name:"New",uri:"",enabled:true});hydrate(renderDest);setDirty("destinations",true);});
+  $("#btnDiscard").addEventListener("click",discardChanges);
+  $("#btnSaveLocMethod").addEventListener("click",async(e)=>{
+    if(!validateSection("location")){toast(t("Please fix the highlighted fields")||"Please fix the highlighted fields",true);show("location");return;}
+    await withBtn(e.target,async()=>{
+      try{
+        let r=await api("/api/config/location","POST",{data:collectLoc()},{timeoutMs:20000});CFG=r.config;setDirty("location",false);
+        r=await api("/api/config/prayer","POST",{data:collectPrayer()},{timeoutMs:20000});CFG=r.config;setDirty("prayer",false);
+        setFoot();toast(t("Saved location and calculation method")||"Saved location and calculation method");refreshStatus();
+      }catch(err){toast((t("Save failed")||"Save failed")+": "+(err.message==="__timeout__"?(t("Request timed out — check status and try again.")||"timed out"):err.message),true);}
+    },t("Saving…")||"Saving…");
+  });
+  $("#btnReconnect").addEventListener("click",async(e)=>{
+    await withBtn(e.target,async()=>{try{await api("/api/sip/reconnect","POST",{},{timeoutMs:20000});toast(t("Reconnecting…")||"Reconnecting…");
+      setTimeout(refreshStatus,1200);}
+      catch(err){toast((err.message==="__timeout__"?(t("Request timed out — check status.")||"Request timed out — check status."):(t("Failed")||"Failed")+": "+err.message),true);refreshStatus();}},
+      t("Reconnecting…")||"Reconnecting…");});
+  $("#btnSync").addEventListener("click",async(e)=>{
+    await withBtn(e.target,async()=>{try{await api("/api/ntp/sync","POST",{},{timeoutMs:30000});toast(t("Synced")||"Synced");refreshStatus();}
+      catch(err){toast((err.message==="__timeout__"?(t("Request timed out — check status.")||"Request timed out — check status."):(t("Sync failed")||"Sync failed")+": "+err.message),true);refreshStatus();}},
+      t("Syncing…")||"Syncing…");});
+  // dashboard test page — unified safe flow
+  $("#btnTest").addEventListener("click",e=>runTest({prayer:$("#testPrayer").value},e.target));
+  // audio upload with progress
+  $("#btnUpload").addEventListener("click",async(e)=>{
+    const fi=$("#fileInput");if(!fi.files.length){toast(t("Choose a file first")||"Choose a file first",true);return;}
+    const file=fi.files[0];
+    const okExt=/\.(wav|mp3|m4a|aac|ogg|flac|opus)$/i.test(file.name);
+    if(!okExt){progUI("audioProg","err",100,(t("Unsupported file type")||"Unsupported file type")+": "+file.name);return;}
+    await withBtn(e.target,async()=>{
+      progUI("audioProg","",0,t("Uploading…")||"Uploading…");
+      try{
+        await uploadWithProgress("/api/audio/upload",file,(pct,done)=>{
+          progUI("audioProg","",pct,done?(t("Upload complete. Processing…")||"Upload complete. Processing…"):(t("Uploading…")||"Uploading…"));});
+        progUI("audioProg","ok",100,t("Upload successful")||"Upload successful");
+        fi.value="";await loadAudio();
+        setTimeout(()=>progUI("audioProg","hide"),2500);
+      }catch(err){progUI("audioProg","err",100,(t("Upload failed")||"Upload failed")+": "+err.message);}
+    },t("Uploading…")||"Uploading…");});
+  // timetable import with progress
+  $("#btnImportTt").addEventListener("click",async(e)=>{
+    const fi=$("#ttInput");if(!fi.files.length){toast(t("Choose a timetable file first")||"Choose a timetable file first",true);return;}
+    const file=fi.files[0];
+    if(!/\.(txt|csv)$/i.test(file.name)){progUI("ttProg","err",100,(t("Unsupported file type")||"Unsupported file type")+": "+file.name);return;}
+    await withBtn(e.target,async()=>{
+      progUI("ttProg","",0,t("Importing…")||"Importing…");
+      try{
+        const j=await uploadWithProgress("/api/schedule/manual/import",file,(pct,done)=>{
+          progUI("ttProg","",pct,done?(t("Upload complete. Processing timetable…")||"Upload complete. Processing timetable…"):(t("Importing…")||"Importing…"));});
+        progUI("ttProg","ok",100,(t("Import successful")||"Import successful")+(j&&j.days?" · "+j.days+"d":""));
+        fi.value="";CFG=await api("/api/config");hydrate(()=>{loadTimeline();renderSchedule(null);});refreshTtStatus();refreshStatus();
+        toast(t("Timetable imported. Prayer time source changed to Manual.")||"Timetable imported. Prayer time source changed to Manual.");
+        setTimeout(()=>progUI("ttProg","hide"),2500);
+      }catch(err){progUI("ttProg","err",100,(t("Import failed")||"Import failed")+": "+err.message);}
+    },t("Importing…")||"Importing…");});
+  // logs
+  $("#btnRefreshLog").addEventListener("click",e=>withBtn(e.target,loadLogs,t("Refresh")||"Refresh"));
+  $("#btnExportLog").addEventListener("click",async(e)=>{await withBtn(e.target,async()=>{
+    try{const r=await fetch("/api/logs/export");if(!r.ok)throw new Error("HTTP "+r.status);
+      const blob=await r.blob();const u=URL.createObjectURL(blob);const a=document.createElement("a");
+      a.href=u;a.download="adhan-pager.log";a.click();URL.revokeObjectURL(u);toast(t("Exported")||"Exported");}
+    catch(err){toast((t("Export failed")||"Export failed")+": "+err.message,true);}},t("Exporting…")||"Exporting…");});
+  $("#logFilter").addEventListener("change",loadLogs);
+  $("#logLive").addEventListener("change",e=>setLogLive(e.target.checked));
+  // reset upload progress when a new file is chosen
+  $("#fileInput").addEventListener("change",()=>progUI("audioProg","hide"));
+  $("#ttInput").addEventListener("change",()=>progUI("ttProg","hide"));
+  // manual stop / drop active call
+  $("#btnStopCall").addEventListener("click",async(e)=>{
+    const go=await confirmDialog({title:t("Stop the active page?")||"Stop the active page?",danger:true,
+      message:t("This will immediately stop the active page/call. Continue?")||"This will immediately stop the active page/call. Continue?",
+      confirmText:t("Stop current page")||"Stop current page"});
+    if(!go)return;
+    await withBtn(e.target.closest("button"),async()=>{
+      try{const r=await api("/api/page/stop","POST",{},{timeoutMs:15000});
+        toast(r&&r.stopped?(t("Active page stopped")||"Active page stopped"):(t("No active call to stop")||"No active call to stop"));}
+      catch(err){toast(err.message==="__timeout__"
+        ?(t("Request timed out. The backend did not confirm the result. Check active call status and logs.")||"Request timed out. Check status and logs.")
+        :(t("Stop failed")||"Stop failed")+": "+err.message,true);}
+      finally{setTimeout(refreshStatus,600);
+        if(document.querySelector('.panel[data-tab="logs"]').classList.contains("active"))setTimeout(loadLogs,600);}
+    },t("Stopping…")||"Stopping…");
+  });
+}
+init();
+</script>
+</body>
+</html>

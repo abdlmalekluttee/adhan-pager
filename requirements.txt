@@ -1,0 +1,9 @@
+adhanpy>=1.0.0
+fastapi>=0.110
+uvicorn[standard]>=0.29
+apscheduler>=3.10
+ntplib>=0.4
+PyYAML>=6.0
+python-multipart>=0.0.9
+pydantic>=2.6
+geonamescache>=2.0.0
