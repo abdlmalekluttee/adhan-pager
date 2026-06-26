@@ -259,14 +259,108 @@
     .callgrid{gap:14px}
     .codecrow{grid-template-columns:1fr;gap:6px}
   }
+  /* ---- auth gate ---- */
+  body:not(.authed) .app{display:none}
+  #authGate{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(1200px 600px at 50% -10%, #15332e 0%, var(--night) 60%);padding:24px}
+  body:not(.authed) #authGate{display:flex}
+  .auth-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:26px 24px;box-shadow:0 24px 60px #0007}
+  .auth-card h1{font-size:19px;margin:0 0 4px}
+  .auth-card .sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+  .auth-card label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+  .auth-card input[type=text],.auth-card input[type=password]{width:100%;padding:11px 12px;border-radius:9px;
+    border:1px solid var(--line);background:var(--night-2);color:var(--ink);font-size:14px;font-family:var(--sans)}
+  .auth-row{display:flex;gap:10px;align-items:center;margin-top:14px}
+  .auth-row.between{justify-content:space-between}
+  .auth-err{background:#3a1d1d;border:1px solid var(--bad);color:#f3b4b4;border-radius:9px;
+    padding:9px 12px;font-size:12.5px;margin-top:14px;display:none}
+  .auth-err.show{display:block}
+  .auth-btn{width:100%;margin-top:18px;padding:12px;border:none;border-radius:10px;background:var(--brass);
+    color:var(--night);font-weight:700;font-size:14px;cursor:pointer;font-family:var(--sans)}
+  .auth-btn:disabled{opacity:.6;cursor:default}
+  .auth-mini{display:flex;gap:8px;margin-top:16px;justify-content:center}
+  .auth-mini select{font-size:12px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);
+    background:var(--night-2);color:var(--ink)}
+  .auth-card .chk{display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--muted);margin-top:14px}
+  .auth-brand{text-align:center;margin-bottom:18px}
+  .auth-brand b{font-size:17px}
+  .auth-brand span{display:block;color:var(--brass);font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase}
+  .pwhint{font-size:11.5px;margin-top:6px;color:var(--dim)}
+  .pwhint.weak{color:var(--bad)} .pwhint.fair{color:var(--warn)} .pwhint.good,.pwhint.strong{color:var(--good)}
+  /* ---- account ---- */
+  .acct-grid{display:grid;gap:16px}
+  .swatch-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;outline:1px solid var(--line)}
+  .swatch.sel{border-color:var(--ink)}
+  .logout-top{background:none;border:1px solid var(--line);color:var(--muted);padding:6px 12px;
+    border-radius:8px;cursor:pointer;font-size:12px;font-family:var(--sans)}
+  .logout-top:hover{color:var(--ink);border-color:var(--bad)}
+  .btn.attn{box-shadow:0 0 0 2px var(--warn);animation:attnPulse 1.6s ease-in-out infinite}
+  @keyframes attnPulse{0%,100%{box-shadow:0 0 0 2px var(--warn)}50%{box-shadow:0 0 0 4px #e0b35744}}
+  .dirty-hint{color:var(--warn);font-size:12px;margin-inline-start:10px;align-self:center}
+  /* login RTL */
+  [dir="rtl"] .auth-card{text-align:right}
+  [dir="rtl"] .auth-card label{text-align:right}
+  [dir="rtl"] .auth-card input[type=text],[dir="rtl"] .auth-card input[type=password]{text-align:right}
+  [dir="rtl"] .auth-card .chk{flex-direction:row-reverse;justify-content:flex-end}
+  [dir="rtl"] .auth-card input.ltr,[dir="rtl"] .auth-card input[autocomplete=username]{direction:ltr;text-align:right;unicode-bidi:plaintext}
+  .auth-btn{text-align:center}
+  /* account summary grid */
+  .acct-sum{display:grid;grid-template-columns:max-content 1fr;gap:10px 18px;align-items:center}
+  .acct-sum .lbl{opacity:.75;white-space:nowrap;color:var(--muted)}
+  .acct-sum .val{font-weight:700;word-break:break-word;unicode-bidi:plaintext}
+  [dir="rtl"] .acct-sum{direction:rtl}
 </style>
 </head>
 <body>
+<div id="authGate">
+  <!-- LOGIN -->
+  <div class="auth-card" id="loginCard">
+    <div class="auth-brand"><b>Adhan Pager</b><span>SIP · paging</span></div>
+    <h1 data-i18n="Sign in">Sign in</h1>
+    <p class="sub" data-i18n="Enter your administrator credentials.">Enter your administrator credentials.</p>
+    <label data-i18n="Username">Username</label>
+    <input type="text" id="loginUser" autocomplete="username" autocapitalize="off" spellcheck="false" />
+    <label data-i18n="Password">Password</label>
+    <input type="password" id="loginPass" autocomplete="current-password" />
+    <label class="chk"><input type="checkbox" id="loginRemember" /> <span data-i18n="Keep me signed in (7 days)">Keep me signed in (7 days)</span></label>
+    <div class="auth-err" id="loginErr"></div>
+    <button class="auth-btn" id="loginBtn" data-i18n="Sign in">Sign in</button>
+    <div class="auth-mini">
+      <select id="authLang" title="Language"><option value="en">English</option><option value="ar">العربية</option></select>
+      <select id="authTheme" title="Theme">
+        <option value="auto" data-i18n="◐ Auto">◐ Auto</option>
+        <option value="dark" data-i18n="🌙 Dark">🌙 Dark</option>
+        <option value="light" data-i18n="☀ Light">☀ Light</option>
+      </select>
+    </div>
+  </div>
+  <!-- FORCED PASSWORD CHANGE -->
+  <div class="auth-card" id="forceCard" style="display:none">
+    <div class="auth-brand"><b>Adhan Pager</b><span>SIP · paging</span></div>
+    <h1 data-i18n="Change your password">Change your password</h1>
+    <p class="sub" data-i18n="Default password must be changed before using the system.">Default password must be changed before using the system.</p>
+    <label data-i18n="Current password">Current password</label>
+    <input type="password" id="fcCurrent" autocomplete="current-password" />
+    <label data-i18n="New password">New password</label>
+    <input type="password" id="fcNew" autocomplete="new-password" />
+    <div class="pwhint" id="fcHint"></div>
+    <label data-i18n="Confirm password">Confirm password</label>
+    <input type="password" id="fcConfirm" autocomplete="new-password" />
+    <div class="auth-err" id="fcErr"></div>
+    <button class="auth-btn" id="fcBtn" data-i18n="Save password">Save password</button>
+    <div class="auth-row between" style="margin-top:14px">
+      <span></span>
+      <button class="logout-top" id="fcLogout" data-i18n="Logout">Logout</button>
+    </div>
+  </div>
+</div>
 <div class="app">
   <aside class="rail">
     <div class="brand"><b>Adhan Pager</b><span>SIP · paging</span></div>
     <nav class="nav" id="nav"></nav>
-    <div class="rail-foot" id="foot">v1.0</div>
+    <div class="rail-foot" id="foot">v1.7.0</div>
   </aside>
   <main>
     <div class="topbar">
@@ -284,6 +378,7 @@
           <option value="dark" data-i18n="🌙 Dark">🌙 Dark</option>
           <option value="light" data-i18n="☀ Light">☀ Light</option>
         </select>
+        <button class="logout-top" id="btnLogout" title="Logout" data-i18n="Logout">Logout</button>
       </div>
     </div>
     <div class="wrap">
@@ -467,6 +562,45 @@
           <div class="logbox" id="logBox" tabindex="0">—</div>
         </div>
       </section>
+
+      <!-- ACCOUNT -->
+      <section class="panel" data-tab="account">
+        <h2 data-i18n="Account">Account</h2>
+        <p class="sub" data-i18n="Manage your login credentials and personal preferences.">Manage your login credentials and personal preferences.</p>
+        <div class="acct-grid">
+          <div class="card"><h3 data-i18n="Account">Account</h3>
+            <div class="acct-sum">
+              <span class="lbl" data-i18n="Logged in as">Logged in as</span><b id="acctUser" class="val">—</b>
+              <span class="lbl" data-i18n="Role">Role</span><b class="val" data-i18n="Administrator">Administrator</b>
+              <span class="lbl" data-i18n="Last login">Last login</span><b id="acctLast" class="val">—</b>
+              <span class="lbl" data-i18n="Password status">Password status</span><b id="acctPwStatus" class="val">—</b>
+            </div>
+          </div>
+          <div class="card"><h3 data-i18n="Change username">Change username</h3>
+            <div class="grid">
+              <div><label data-i18n="New username">New username</label><input type="text" id="accNewUser" class="ltr" autocapitalize="off" spellcheck="false" /></div>
+            </div>
+            <div class="actions"><button class="btn" id="btnSaveUser" data-i18n="Save username">Save username</button></div>
+          </div>
+          <div class="card"><h3 data-i18n="Change password">Change password</h3>
+            <div class="grid">
+              <div><label data-i18n="Current password">Current password</label><input type="password" id="accCurPw" autocomplete="current-password" /></div>
+              <div><label data-i18n="New password">New password</label><input type="password" id="accNewPw" autocomplete="new-password" /><div class="pwhint" id="accPwHint"></div></div>
+              <div><label data-i18n="Confirm password">Confirm password</label><input type="password" id="accConfPw" autocomplete="new-password" /></div>
+            </div>
+            <div class="actions"><button class="btn" id="btnSavePw" data-i18n="Save password">Save password</button></div>
+          </div>
+          <div class="card"><h3 data-i18n="Preferences">Preferences</h3>
+            <div class="grid">
+              <div><label data-i18n="Language">Language</label><select id="accLang"><option value="en">English</option><option value="ar">العربية</option></select></div>
+              <div><label data-i18n="Theme">Theme</label><select id="accTheme">
+                <option value="auto" data-i18n="◐ Auto">◐ Auto</option><option value="dark" data-i18n="🌙 Dark">🌙 Dark</option><option value="light" data-i18n="☀ Light">☀ Light</option></select></div>
+              <div><label data-i18n="Accent color">Accent color</label><div class="swatch-row" id="accentRow"></div></div>
+            </div>
+            <div class="actions"><button class="btn" id="btnSavePrefs" data-i18n="Save preferences">Save preferences</button><span class="dirty-hint" id="prefsDirty" style="display:none" data-i18n="Unsaved preferences">Unsaved preferences</span></div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 </div>
@@ -500,7 +634,7 @@ const PRAYERS=["fajr","dhuhr","asr","maghrib","isha"];
 const AR={fajr:"الفجر",dhuhr:"الظهر",asr:"العصر",maghrib:"المغرب",isha:"العشاء",sunrise:"الشروق"};
 const TABS=[["dashboard","◷","Dashboard"],["server","⌁","SIP Registration"],["destinations","☎","Destinations"],
   ["schedule","☾","Schedule"],["audio","♪","Audio & files"],["codecs","≋","Codecs"],
-  ["location","⌖","Location"],["ntp","⏱","Time / NTP"],["logs","▤","Logs"]];
+  ["location","⌖","Location"],["ntp","⏱","Time / NTP"],["logs","▤","Logs"],["account","👤","Account"]];
 const METHODS=["MUSLIM_WORLD_LEAGUE","EGYPTIAN","KARACHI","UMM_AL_QURA","DUBAI",
   "MOON_SIGHTING_COMMITTEE","NORTH_AMERICA","KUWAIT","QATAR","SINGAPORE","UOIF"];
 const METHOD_LABELS={
@@ -520,7 +654,7 @@ let CFG=null, STATUS=null, TZ="UTC", LANG="en";
 let TT={loaded:false,days:0}, AUDIO_FILES=[];
 
 // ---- i18n (Arabic) ----
-const I18N={ar:{"Dashboard":"لوحة التحكم","SIP Registration":"تسجيل SIP","Destinations":"وجهات البث","Schedule":"جدول الصلاة","Audio & files":"الصوت والملفات","Codecs":"الترميزات","Location":"الموقع","Time / NTP":"الوقت / NTP","Logs":"السجلات","Live status of the call-to-prayer paging service.":"الحالة المباشرة لخدمة بث الأذان.","Next page":"البث القادم","▶ Test page now":"▶ تجربة البث الآن","Test page now":"تجربة البث الآن","Dials enabled destinations and plays the assigned audio.":"يتصل بالوجهات المفعّلة ويشغّل الصوت المحدد.","Last page":"آخر بث","On the line now":"على الخط الآن","Codec":"الترميز","Elapsed":"المنقضي","Remaining":"المتبقي","No more today":"لا مزيد اليوم","Prayer schedule":"جدول أوقات الصلاة","Calculation method and which prayers to page.":"طريقة الحساب والصلوات التي سيتم بثها.","Time source":"مصدر الوقت","Prayer time source":"مصدر أوقات الصلاة","Calculation":"الحساب","Calculation method":"طريقة الحساب","Asr madhab":"مذهب العصر","High-latitude rule":"قاعدة خطوط العرض العالية","Prayers & fine-tuning":"الصلوات والضبط الدقيق","Today":"اليوم","Adjust (min)":"تعديل (دقيقة)","Adhan on":"الأذان مفعّل","Iqama on":"الإقامة مفعّلة","Prayer":"الصلاة","Iqama (optional second page)":"الإقامة (بث ثانٍ اختياري)","Enable iqama page":"تفعيل بث الإقامة","Minutes after adhan":"دقائق بعد الأذان","Save schedule":"حفظ جدول الصلاة","Import timetable":"استيراد الجدول","Adhan recordings and which one plays for each prayer.":"تسجيلات الأذان وأيها يُشغَّل لكل صلاة.","Library":"المكتبة","Upload":"رفع","Assignment":"التعيين","Default Adhan":"الأذان الافتراضي","Use this one file for ALL adhans":"استخدم هذا الملف لكل الأذانات","Iqama audio (default)":"صوت الإقامة (افتراضي)","Resample target":"معدل العينة","Volume gain (dB)":"كسب الصوت (dB)","Save audio settings":"حفظ إعدادات الصوت","File":"الملف","Length":"المدة","Format":"الصيغة","▶ Test":"▶ تجربة","Priorities":"الأولويات","Save & reconnect":"حفظ وإعادة الاتصال","Priority (0 = off, higher = preferred)":"الأولوية (0 = إيقاف، أعلى = مفضّل)","Enabled":"مفعّل","Used for astronomical prayer-time calculation.":"يُستخدم لحساب أوقات الصلاة فلكياً.","Coordinates":"الإحداثيات","Latitude":"خط العرض","Longitude":"خط الطول","Timezone (IANA)":"المنطقة الزمنية","Save location":"حفظ الموقع","Time & NTP":"الوقت / NTP","Accurate time keeps prayer pages on the minute.":"الوقت الدقيق يبقي البث على الدقيقة.","Status":"الحالة","Settings":"الإعدادات","Sync now":"مزامنة الآن","Save":"حفظ","NTP enabled":"تفعيل NTP","NTP server":"خادم NTP","Sync interval (min)":"فترة المزامنة (دقيقة)","Set system clock":"ضبط ساعة النظام","Service log for troubleshooting. Export and send the file for debugging.":"سجل الخدمة لاستكشاف الأخطاء. صدّر الملف وأرسله لتصحيح الأخطاء.","Recent activity":"النشاط الأخير","⬇ Export full log":"⬇ تصدير السجل الكامل","Refresh":"تحديث","Auto-scroll":"تمرير تلقائي","SIP account":"حساب SIP","Registration":"التسجيل","Reconnect now":"إعادة الاتصال الآن","Registrar / SIP domain":"المسجّل / نطاق SIP","Username / extension":"اسم المستخدم / التحويلة","Password":"كلمة المرور","Auth username":"اسم مستخدم المصادقة","Display name":"الاسم الظاهر","Transport":"النقل","Account enabled":"الحساب مفعّل","Paging targets":"وجهات البث","Call behaviour":"سلوك الاتصال","Name":"الاسم","Extension / URI":"التحويلة / URI","On":"مفعّل","+ Add destination":"+ إضافة وجهة","Saved":"تم الحفظ","Offset":"الإزاحة","Last sync":"آخر مزامنة","System time":"وقت النظام","Stratum":"الطبقة","Reference":"المرجع","Root delay":"تأخير الجذر","Root dispersion":"تشتت الجذر","Round-trip":"ذهاب وإياب","Next sync":"المزامنة القادمة","Server":"الخادم","never":"أبداً","clockcap":"ضبط ساعة النظام يتطلب حاوية ذات صلاحيات (CAP_SYS_TIME). وإلا تُطبّق الإزاحة برمجياً، وهو كافٍ للجدولة.","completed":"اكتمل","ringing":"يرن","Reconnecting…":"جارٍ إعادة الاتصال…","Next pages at 00:01 refresh":"البث القادم بعد تحديث 00:01","Priority offered during call setup. 0 disables a codec. Higher = preferred.":"الأولوية المعروضة أثناء إعداد الاتصال. 0 يعطّل الترميز. أعلى = مفضّل.","SIP account this unit registers as on your PBX / registrar.":"حساب SIP الذي تسجّل به هذه الوحدة على المقسّم.","Extensions, paging groups, or multicast numbers to call.":"التحويلات أو مجموعات البث أو أرقام البث المتعدد للاتصال بها.","Unsaved changes":"تغييرات غير محفوظة","Confirm":"تأكيد","Cancel":"إلغاء","Working…":"جارٍ التنفيذ…","Saving…":"جارٍ الحفظ…","Save failed":"فشل الحفظ","Please fix the highlighted fields":"يرجى تصحيح الحقول المظللة","Could not load configuration":"تعذّر تحميل الإعدادات","The backend did not respond. Check that the service is running.":"الخادم لم يستجب. تأكد من تشغيل الخدمة.","Retry":"إعادة المحاولة","System health":"حالة النظام","Backend / API":"الخادم / API","Reachable":"متصل","Registered":"مسجّل","Not registered":"غير مسجّل","Stopped":"متوقف","Library not loaded":"المكتبة غير محمّلة","Time sync":"مزامنة الوقت","Synced":"تمت المزامنة","Not synced":"غير متزامن","Failed":"فشل","Manual":"يدوي","Calculated":"محسوب","No timetable imported":"لا يوجد جدول مستورد","None scheduled":"لا شيء مجدول","Active call":"اتصال نشط","No active call":"لا يوجد اتصال نشط","In progress":"قيد التنفيذ","Audio":"الصوت","No files":"لا ملفات","Assigned":"معيّن","Unassigned":"غير معيّن","Timezone":"المنطقة الزمنية","Loaded":"محمّل","days in timetable":"يوماً في الجدول","No timetable imported. Import a file or switch to calculated times.":"لا يوجد جدول مستورد. استورد ملفاً أو بدّل إلى الأوقات المحسوبة.","No audio files uploaded yet. Upload an audio file to assign it to a prayer.":"لم يتم رفع أي ملف صوتي بعد. ارفع ملفاً لتعيينه لصلاة.","No destinations configured. Add at least one before testing a page.":"لا توجد وجهات. أضف وجهة واحدة على الأقل قبل التجربة.","Assigned file is missing from the library.":"الملف المعيّن غير موجود في المكتبة.","Assigned file is missing.":"الملف المعيّن مفقود.","not WAV":"ليس WAV","none":"لا شيء","Delete":"حذف","Delete audio file?":"حذف الملف الصوتي؟","This cannot be undone.":"لا يمكن التراجع عن هذا.","Deleted":"تم الحذف","Delete failed":"فشل الحذف","Delete destination?":"حذف الوجهة؟","this destination":"هذه الوجهة","Save destinations to apply.":"احفظ الوجهات للتطبيق.","Save to apply.":"احفظ للتطبيق.","Start a live test page?":"بدء بث تجريبي مباشر؟","This plays real audio to the destination(s) below. Continue?":"سيشغّل صوتاً حقيقياً إلى الوجهات أدناه. متابعة؟","This will start a REAL page to the configured destination(s). Continue?":"سيبدأ بثاً حقيقياً إلى الوجهات المهيأة. متابعة؟","Mode":"الوضع","Play test":"تشغيل التجربة","Start test":"بدء البث التجريبي","Paging…":"جارٍ البث…","Test page started":"بدأ البث التجريبي","Test failed":"فشلت التجربة","No enabled destinations to test.":"لا توجد وجهات مفعّلة للتجربة.","Choose a file first":"اختر ملفاً أولاً","Unsupported file type":"نوع ملف غير مدعوم","Uploading…":"جارٍ الرفع…","Upload complete. Processing…":"اكتمل الرفع. جارٍ المعالجة…","Upload successful":"تم الرفع بنجاح","Upload failed":"فشل الرفع","Choose a timetable file first":"اختر ملف جدول أولاً","Importing…":"جارٍ الاستيراد…","Upload complete. Processing timetable…":"اكتمل الرفع. جارٍ معالجة الجدول…","Import successful":"تم الاستيراد بنجاح","Import failed":"فشل الاستيراد","Exported":"تم التصدير","Export failed":"فشل التصدير","Exporting…":"جارٍ التصدير…","Syncing…":"جارٍ المزامنة…","Sync failed":"فشلت المزامنة","Could not load audio":"تعذّر تحميل الصوت","Could not load logs":"تعذّر تحميل السجلات","No log entries to show.":"لا توجد سجلات لعرضها.","All":"الكل","Errors":"أخطاء","Warnings":"تحذيرات","Info":"معلومات","Live":"مباشر","Test":"تجربة","dialing":"جارٍ الاتصال","playing":"قيد التشغيل","finishing":"ينهي","Network error":"خطأ في الشبكة","SIP server / registrar is required.":"خادم SIP مطلوب.","Username / extension is required.":"اسم المستخدم / التحويلة مطلوب.","No password set — registration may fail.":"لا توجد كلمة مرور — قد يفشل التسجيل.","Port must be 1–65535.":"المنفذ يجب أن يكون 1–65535.","Port must be 0–65535.":"المنفذ يجب أن يكون 0–65535.","Expiry must be ≥ 10 s.":"الانتهاء يجب أن يكون ≥ 10 ثوان.","Must be a positive number.":"يجب أن يكون رقماً موجباً.","Cannot be negative.":"لا يمكن أن يكون سالباً.","Latitude must be between -90 and 90.":"خط العرض يجب أن يكون بين -90 و 90.","Longitude must be between -180 and 180.":"خط الطول يجب أن يكون بين -180 و 180.","Timezone is required.":"المنطقة الزمنية مطلوبة.","NTP server is required.":"خادم NTP مطلوب.","Interval must be ≥ 1 min.":"الفترة يجب أن تكون ≥ دقيقة.","Name is required.":"الاسم مطلوب.","Extension / URI is required.":"التحويلة / URI مطلوبة.","URI cannot contain spaces.":"لا يمكن أن تحتوي URI على مسافات.","Duplicate destination name.":"اسم وجهة مكرر.","Duplicate URI.":"عنوان URI مكرر.","Destination":"وجهة بث","stopped":"متوقّف","n/a":"غير متاح","ok":"سليم","missing":"مفقود","failed":"فشل","No page yet.":"لا يوجد بث بعد.","Adhan":"أذان","Iqama":"إقامة","Backend not reachable — cannot test.":"الخادم غير متاح — لا يمكن التجربة.","Save or discard your changes before running a live test. The test uses the last saved configuration, not the values currently on screen.":"احفظ التغييرات أو تراجع عنها قبل تشغيل بث تجريبي مباشر. تستخدم التجربة آخر إعدادات محفوظة، وليس القيم الظاهرة حالياً على الشاشة.","Go to unsaved section":"الانتقال إلى القسم غير المحفوظ","Real audio will play on the enabled destinations. Make sure the speakers / paging system are ready before continuing.":"سيتم تشغيل صوت حقيقي على وجهات البث المفعّلة. تأكد أن السماعات أو نظام النداء جاهز قبل المتابعة.","Test request sent. Watch active call status and logs.":"تم إرسال طلب التجربة. راقب حالة الاتصال النشط والسجلات.","Request timed out. The backend did not confirm whether the test started. Check active call status and logs.":"انتهت مهلة الطلب. لم يؤكّد الخادم ما إذا بدأت التجربة. تحقق من حالة الاتصال النشط والسجلات.","Request timed out — check status.":"انتهت مهلة الطلب — تحقق من الحالة.","Request timed out — check status and try again.":"انتهت مهلة الطلب — تحقق من الحالة وحاول مجدداً.","Discard changes":"تجاهل التغييرات","Discard changes?":"تجاهل التغييرات؟","Discard":"تجاهل","Reload the last saved configuration and lose your unsaved edits?":"إعادة تحميل آخر إعدادات محفوظة وفقدان تعديلاتك غير المحفوظة؟","Changes discarded":"تم تجاهل التغييرات","Could not reload configuration":"تعذّر إعادة تحميل الإعدادات","Save destinations":"حفظ وجهات البث","Save call behaviour":"حفظ إعدادات الاتصال","Save NTP settings":"حفظ إعدادات الوقت","Saved · reconnecting SIP":"تم الحفظ · جارٍ إعادة اتصال SIP","Calculated (astronomical)":"محسوب (فلكي)","Manual timetable (uploaded file)":"جدول يدوي (ملف مرفوع)","Shafi (standard Asr)":"شافعي (عصر قياسي)","Hanafi (later Asr)":"حنفي (عصر متأخّر)","Sequential (one after another)":"تسلسلي (واحد تلو الآخر)","Parallel (all at once)":"متوازٍ (الكل دفعة واحدة)","SIP library (pjsua2) is not loaded — paging is disabled. You can still edit all settings in this mode.":"مكتبة SIP (pjsua2) غير محمّلة — البث معطّل. لا يزال بإمكانك تعديل كل الإعدادات في هذا الوضع.","Paging mode":"وضع البث","Ring timeout (s)":"مهلة الرنين (ث)","Max call length (s)":"أقصى مدة اتصال (ث)","Delay after answer (ms)":"التأخير بعد الرد (مللي ث)","Hang up after audio (ms)":"إنهاء بعد الصوت (مللي ث)","Outbound proxy (optional)":"وكيل صادر (اختياري)","Registrar port":"منفذ المسجّل","Local bind port":"منفذ الربط المحلي","Register expiry (s)":"انتهاء التسجيل (ث)","Audio files":"ملفات الصوت","Processing":"جارٍ المعالجة","Stop current page":"إيقاف البث الحالي","Stop the active page?":"إيقاف البث النشط؟","This will immediately stop the active page/call. Continue?":"سيتم إيقاف البث أو الاتصال النشط فوراً. هل تريد المتابعة؟","Stopping…":"جارٍ الإيقاف…","Stopping":"جارٍ الإيقاف","Active page stopped":"تم إيقاف البث النشط","No active call to stop":"لا يوجد اتصال نشط لإيقافه","Stop failed":"فشل الإيقاف","Request timed out. The backend did not confirm the result. Check active call status and logs.":"انتهت مهلة الطلب. لم تؤكّد الخدمة النتيجة. تحقّق من حالة الاتصال النشط والسجلات.","Dialing":"جارٍ الاتصال","Connected":"متصل","Playing":"جارٍ التشغيل","Finishing":"يُنهي","Manually stopped":"تم الإيقاف يدوياً","updated":"حُدّث","in":"خلال","now":"الآن","Last updated":"آخر تحديث","connection lost":"الاتصال منقطع","Offline / stale":"غير متصل / قديم","Backend connection lost. Showing last known status from":"انقطع الاتصال بالخدمة. يتم عرض آخر حالة معروفة من","Save or discard your changes before changing the language.":"احفظ التغييرات أو تراجع عنها قبل تغيير اللغة.","Timetable imported. Prayer time source changed to Manual.":"تم استيراد الجدول. تم تغيير مصدر أوقات الصلاة إلى يدوي.","◐ Auto":"◐ تلقائي","🌙 Dark":"🌙 داكن","☀ Light":"☀ فاتح","Ready":"جاهز","Could not load prayer timeline. Showing last known values.":"تعذّر تحميل جدول الصلاة. يتم عرض آخر القيم المعروفة.","Could not load timetable status":"تعذّر تحميل حالة الجدول المستورد","Location mode":"وضع تحديد الموقع","Select by country / city":"التحديد حسب الدولة / المدينة","Manual coordinates":"إحداثيات يدوية","Country":"الدولة","City":"المدينة","Select country":"اختر الدولة","Search city":"ابحث عن مدينة","Search by city name, Arabic name, or ISO code":"ابحث بالاسم أو الاسم العربي أو رمز ISO","No matches":"لا توجد نتائج","No location selected":"لم يتم تحديد موقع","Advanced manual override":"تجاوز يدوي متقدّم","Recommended calculation method":"طريقة الحساب المقترحة","Apply recommended":"تطبيق المقترحة","Keep current method":"الإبقاء على الحالية","Recommended method applied":"تم تطبيق الطريقة المقترحة","Select a city, or switch to manual coordinates.":"اختر مدينة، أو بدّل إلى الإحداثيات اليدوية.","Used when a prayer has no specific file":"يُستخدم عندما لا يكون للصلاة ملف محدد","Overrides the per-prayer adhan files below":"يتجاوز ملفات الأذان لكل صلاة بالأسفل","Used when a prayer has no specific iqama file":"يُستخدم عندما لا يكون للصلاة ملف إقامة محدد","e.g. Etc/UTC":"مثال: Etc/UTC","PBX host, e.g. sip.example.net":"عنوان مقسّم PBX، مثال: sip.example.net","host:port":"المضيف:المنفذ","Manual uses the file you import below; calculated uses lat/long + method":"الوضع اليدوي يستخدم الملف الذي تستورده أدناه؛ والوضع المحسوب يستخدم الإحداثيات وطريقة الحساب","Search by country name or ISO code":"ابحث باسم الدولة أو رمز ISO","Search by city name or alternate/local name":"ابحث باسم المدينة أو الاسم المحلي/البديل","Select country first":"اختر الدولة أولاً","City list is based on the bundled offline city database. If your exact location is missing, use Manual coordinates.":"تعتمد قائمة المدن على قاعدة بيانات محلية مدمجة. إذا لم تجد موقعك بدقة، استخدم الإحداثيات اليدوية.","Please select a country from the list.":"يرجى اختيار دولة من القائمة.","Please select a city from the list.":"يرجى اختيار مدينة من القائمة.","Invalid timezone. Use a valid IANA timezone such as Etc/UTC.":"منطقة زمنية غير صحيحة. استخدم منطقة IANA صحيحة مثل Etc/UTC.","Location database is unavailable. Use manual coordinates or check installation.":"قاعدة بيانات المواقع غير متاحة. استخدم الإحداثيات اليدوية أو تحقق من التثبيت.","Recommended method applied. Remember to save both Location and Schedule.":"تم تطبيق الطريقة المقترحة. تذكّر حفظ الموقع والجدول معاً.","Add at least one destination before saving.":"أضف وجهة واحدة على الأقل قبل الحفظ.","enabled":"مفعّلة","None — paging will not run":"لا شيء — لن يعمل البث","No destinations enabled. Paging will not run until you add and enable at least one destination.":"لا توجد وجهات مفعّلة. لن يعمل البث حتى تضيف وجهة واحدة وتفعّلها على الأقل.","Saved, but no destinations are enabled — paging will not run.":"تم الحفظ، لكن لا توجد وجهات مفعّلة — لن يعمل البث.","Save location and calculation method":"حفظ الموقع وطريقة الحساب","Saved location and calculation method":"تم حفظ الموقع وطريقة الحساب","Middle of the night":"منتصف الليل","Seventh of the night":"سُبع الليل","Twilight angle":"زاوية الشفق","Coordinates from selected city":"الإحداثيات من المدينة المحددة","These come from the selected city. To edit them, switch Location mode to Manual coordinates.":"هذه مأخوذة من المدينة المحددة. لتعديلها، بدّل وضع الموقع إلى الإحداثيات اليدوية."}};
+const I18N={ar:{"Dashboard":"لوحة التحكم","SIP Registration":"تسجيل SIP","Destinations":"وجهات البث","Schedule":"جدول الصلاة","Audio & files":"الصوت والملفات","Codecs":"الترميزات","Location":"الموقع","Time / NTP":"الوقت / NTP","Logs":"السجلات","Live status of the call-to-prayer paging service.":"الحالة المباشرة لخدمة بث الأذان.","Next page":"البث القادم","▶ Test page now":"▶ تجربة البث الآن","Test page now":"تجربة البث الآن","Dials enabled destinations and plays the assigned audio.":"يتصل بالوجهات المفعّلة ويشغّل الصوت المحدد.","Last page":"آخر بث","On the line now":"على الخط الآن","Codec":"الترميز","Elapsed":"المنقضي","Remaining":"المتبقي","No more today":"لا مزيد اليوم","Prayer schedule":"جدول أوقات الصلاة","Calculation method and which prayers to page.":"طريقة الحساب والصلوات التي سيتم بثها.","Time source":"مصدر الوقت","Prayer time source":"مصدر أوقات الصلاة","Calculation":"الحساب","Calculation method":"طريقة الحساب","Asr madhab":"مذهب العصر","High-latitude rule":"قاعدة خطوط العرض العالية","Prayers & fine-tuning":"الصلوات والضبط الدقيق","Today":"اليوم","Adjust (min)":"تعديل (دقيقة)","Adhan on":"الأذان مفعّل","Iqama on":"الإقامة مفعّلة","Prayer":"الصلاة","Iqama (optional second page)":"الإقامة (بث ثانٍ اختياري)","Enable iqama page":"تفعيل بث الإقامة","Minutes after adhan":"دقائق بعد الأذان","Save schedule":"حفظ جدول الصلاة","Import timetable":"استيراد الجدول","Adhan recordings and which one plays for each prayer.":"تسجيلات الأذان وأيها يُشغَّل لكل صلاة.","Library":"المكتبة","Upload":"رفع","Assignment":"التعيين","Default Adhan":"الأذان الافتراضي","Use this one file for ALL adhans":"استخدم هذا الملف لكل الأذانات","Iqama audio (default)":"صوت الإقامة (افتراضي)","Resample target":"معدل العينة","Volume gain (dB)":"كسب الصوت (dB)","Save audio settings":"حفظ إعدادات الصوت","File":"الملف","Length":"المدة","Format":"الصيغة","▶ Test":"▶ تجربة","Priorities":"الأولويات","Save & reconnect":"حفظ وإعادة الاتصال","Priority (0 = off, higher = preferred)":"الأولوية (0 = إيقاف، أعلى = مفضّل)","Enabled":"مفعّل","Used for astronomical prayer-time calculation.":"يُستخدم لحساب أوقات الصلاة فلكياً.","Coordinates":"الإحداثيات","Latitude":"خط العرض","Longitude":"خط الطول","Timezone (IANA)":"المنطقة الزمنية","Save location":"حفظ الموقع","Time & NTP":"الوقت / NTP","Accurate time keeps prayer pages on the minute.":"الوقت الدقيق يبقي البث على الدقيقة.","Status":"الحالة","Settings":"الإعدادات","Sync now":"مزامنة الآن","Save":"حفظ","NTP enabled":"تفعيل NTP","NTP server":"خادم NTP","Sync interval (min)":"فترة المزامنة (دقيقة)","Set system clock":"ضبط ساعة النظام","Service log for troubleshooting. Export and send the file for debugging.":"سجل الخدمة لاستكشاف الأخطاء. صدّر الملف وأرسله لتصحيح الأخطاء.","Recent activity":"النشاط الأخير","⬇ Export full log":"⬇ تصدير السجل الكامل","Refresh":"تحديث","Auto-scroll":"تمرير تلقائي","SIP account":"حساب SIP","Registration":"التسجيل","Reconnect now":"إعادة الاتصال الآن","Registrar / SIP domain":"المسجّل / نطاق SIP","Username / extension":"اسم المستخدم / التحويلة","Password":"كلمة المرور","Auth username":"اسم مستخدم المصادقة","Display name":"الاسم الظاهر","Transport":"النقل","Account enabled":"الحساب مفعّل","Paging targets":"وجهات البث","Call behaviour":"سلوك الاتصال","Name":"الاسم","Extension / URI":"التحويلة / URI","On":"مفعّل","+ Add destination":"+ إضافة وجهة","Saved":"تم الحفظ","Offset":"الإزاحة","Last sync":"آخر مزامنة","System time":"وقت النظام","Stratum":"الطبقة","Reference":"المرجع","Root delay":"تأخير الجذر","Root dispersion":"تشتت الجذر","Round-trip":"ذهاب وإياب","Next sync":"المزامنة القادمة","Server":"الخادم","never":"أبداً","clockcap":"ضبط ساعة النظام يتطلب حاوية ذات صلاحيات (CAP_SYS_TIME). وإلا تُطبّق الإزاحة برمجياً، وهو كافٍ للجدولة.","completed":"اكتمل","ringing":"يرن","Reconnecting…":"جارٍ إعادة الاتصال…","Next pages at 00:01 refresh":"البث القادم بعد تحديث 00:01","Priority offered during call setup. 0 disables a codec. Higher = preferred.":"الأولوية المعروضة أثناء إعداد الاتصال. 0 يعطّل الترميز. أعلى = مفضّل.","SIP account this unit registers as on your PBX / registrar.":"حساب SIP الذي تسجّل به هذه الوحدة على المقسّم.","Extensions, paging groups, or multicast numbers to call.":"التحويلات أو مجموعات البث أو أرقام البث المتعدد للاتصال بها.","Unsaved changes":"تغييرات غير محفوظة","Confirm":"تأكيد","Cancel":"إلغاء","Working…":"جارٍ التنفيذ…","Saving…":"جارٍ الحفظ…","Save failed":"فشل الحفظ","Please fix the highlighted fields":"يرجى تصحيح الحقول المظللة","Could not load configuration":"تعذّر تحميل الإعدادات","The backend did not respond. Check that the service is running.":"الخادم لم يستجب. تأكد من تشغيل الخدمة.","Retry":"إعادة المحاولة","System health":"حالة النظام","Backend / API":"الخادم / API","Reachable":"متصل","Registered":"مسجّل","Not registered":"غير مسجّل","Stopped":"متوقف","Library not loaded":"المكتبة غير محمّلة","Time sync":"مزامنة الوقت","Synced":"تمت المزامنة","Not synced":"غير متزامن","Failed":"فشل","Manual":"يدوي","Calculated":"محسوب","No timetable imported":"لا يوجد جدول مستورد","None scheduled":"لا شيء مجدول","Active call":"اتصال نشط","No active call":"لا يوجد اتصال نشط","In progress":"قيد التنفيذ","Audio":"الصوت","No files":"لا ملفات","Assigned":"معيّن","Unassigned":"غير معيّن","Timezone":"المنطقة الزمنية","Loaded":"محمّل","days in timetable":"يوماً في الجدول","No timetable imported. Import a file or switch to calculated times.":"لا يوجد جدول مستورد. استورد ملفاً أو بدّل إلى الأوقات المحسوبة.","No audio files uploaded yet. Upload an audio file to assign it to a prayer.":"لم يتم رفع أي ملف صوتي بعد. ارفع ملفاً لتعيينه لصلاة.","No destinations configured. Add at least one before testing a page.":"لا توجد وجهات. أضف وجهة واحدة على الأقل قبل التجربة.","Assigned file is missing from the library.":"الملف المعيّن غير موجود في المكتبة.","Assigned file is missing.":"الملف المعيّن مفقود.","not WAV":"ليس WAV","none":"لا شيء","Delete":"حذف","Delete audio file?":"حذف الملف الصوتي؟","This cannot be undone.":"لا يمكن التراجع عن هذا.","Deleted":"تم الحذف","Delete failed":"فشل الحذف","Delete destination?":"حذف الوجهة؟","this destination":"هذه الوجهة","Save destinations to apply.":"احفظ الوجهات للتطبيق.","Save to apply.":"احفظ للتطبيق.","Start a live test page?":"بدء بث تجريبي مباشر؟","This plays real audio to the destination(s) below. Continue?":"سيشغّل صوتاً حقيقياً إلى الوجهات أدناه. متابعة؟","This will start a REAL page to the configured destination(s). Continue?":"سيبدأ بثاً حقيقياً إلى الوجهات المهيأة. متابعة؟","Mode":"الوضع","Play test":"تشغيل التجربة","Start test":"بدء البث التجريبي","Paging…":"جارٍ البث…","Test page started":"بدأ البث التجريبي","Test failed":"فشلت التجربة","No enabled destinations to test.":"لا توجد وجهات مفعّلة للتجربة.","Choose a file first":"اختر ملفاً أولاً","Unsupported file type":"نوع ملف غير مدعوم","Uploading…":"جارٍ الرفع…","Upload complete. Processing…":"اكتمل الرفع. جارٍ المعالجة…","Upload successful":"تم الرفع بنجاح","Upload failed":"فشل الرفع","Choose a timetable file first":"اختر ملف جدول أولاً","Importing…":"جارٍ الاستيراد…","Upload complete. Processing timetable…":"اكتمل الرفع. جارٍ معالجة الجدول…","Import successful":"تم الاستيراد بنجاح","Import failed":"فشل الاستيراد","Exported":"تم التصدير","Export failed":"فشل التصدير","Exporting…":"جارٍ التصدير…","Syncing…":"جارٍ المزامنة…","Sync failed":"فشلت المزامنة","Could not load audio":"تعذّر تحميل الصوت","Could not load logs":"تعذّر تحميل السجلات","No log entries to show.":"لا توجد سجلات لعرضها.","All":"الكل","Errors":"أخطاء","Warnings":"تحذيرات","Info":"معلومات","Live":"مباشر","Test":"تجربة","dialing":"جارٍ الاتصال","playing":"قيد التشغيل","finishing":"ينهي","Network error":"خطأ في الشبكة","SIP server / registrar is required.":"خادم SIP مطلوب.","Username / extension is required.":"اسم المستخدم / التحويلة مطلوب.","No password set — registration may fail.":"لا توجد كلمة مرور — قد يفشل التسجيل.","Port must be 1–65535.":"المنفذ يجب أن يكون 1–65535.","Port must be 0–65535.":"المنفذ يجب أن يكون 0–65535.","Expiry must be ≥ 10 s.":"الانتهاء يجب أن يكون ≥ 10 ثوان.","Must be a positive number.":"يجب أن يكون رقماً موجباً.","Cannot be negative.":"لا يمكن أن يكون سالباً.","Latitude must be between -90 and 90.":"خط العرض يجب أن يكون بين -90 و 90.","Longitude must be between -180 and 180.":"خط الطول يجب أن يكون بين -180 و 180.","Timezone is required.":"المنطقة الزمنية مطلوبة.","NTP server is required.":"خادم NTP مطلوب.","Interval must be ≥ 1 min.":"الفترة يجب أن تكون ≥ دقيقة.","Name is required.":"الاسم مطلوب.","Extension / URI is required.":"التحويلة / URI مطلوبة.","URI cannot contain spaces.":"لا يمكن أن تحتوي URI على مسافات.","Duplicate destination name.":"اسم وجهة مكرر.","Duplicate URI.":"عنوان URI مكرر.","Destination":"وجهة بث","stopped":"متوقّف","n/a":"غير متاح","ok":"سليم","missing":"مفقود","failed":"فشل","No page yet.":"لا يوجد بث بعد.","Adhan":"أذان","Iqama":"إقامة","Backend not reachable — cannot test.":"الخادم غير متاح — لا يمكن التجربة.","Save or discard your changes before running a live test. The test uses the last saved configuration, not the values currently on screen.":"احفظ التغييرات أو تراجع عنها قبل تشغيل بث تجريبي مباشر. تستخدم التجربة آخر إعدادات محفوظة، وليس القيم الظاهرة حالياً على الشاشة.","Go to unsaved section":"الانتقال إلى القسم غير المحفوظ","Real audio will play on the enabled destinations. Make sure the speakers / paging system are ready before continuing.":"سيتم تشغيل صوت حقيقي على وجهات البث المفعّلة. تأكد أن السماعات أو نظام النداء جاهز قبل المتابعة.","Test request sent. Watch active call status and logs.":"تم إرسال طلب التجربة. راقب حالة الاتصال النشط والسجلات.","Request timed out. The backend did not confirm whether the test started. Check active call status and logs.":"انتهت مهلة الطلب. لم يؤكّد الخادم ما إذا بدأت التجربة. تحقق من حالة الاتصال النشط والسجلات.","Request timed out — check status.":"انتهت مهلة الطلب — تحقق من الحالة.","Request timed out — check status and try again.":"انتهت مهلة الطلب — تحقق من الحالة وحاول مجدداً.","Discard changes":"تجاهل التغييرات","Discard changes?":"تجاهل التغييرات؟","Discard":"تجاهل","Reload the last saved configuration and lose your unsaved edits?":"إعادة تحميل آخر إعدادات محفوظة وفقدان تعديلاتك غير المحفوظة؟","Changes discarded":"تم تجاهل التغييرات","Could not reload configuration":"تعذّر إعادة تحميل الإعدادات","Save destinations":"حفظ وجهات البث","Save call behaviour":"حفظ إعدادات الاتصال","Save NTP settings":"حفظ إعدادات الوقت","Saved · reconnecting SIP":"تم الحفظ · جارٍ إعادة اتصال SIP","Calculated (astronomical)":"محسوب (فلكي)","Manual timetable (uploaded file)":"جدول يدوي (ملف مرفوع)","Shafi (standard Asr)":"شافعي (عصر قياسي)","Hanafi (later Asr)":"حنفي (عصر متأخّر)","Sequential (one after another)":"تسلسلي (واحد تلو الآخر)","Parallel (all at once)":"متوازٍ (الكل دفعة واحدة)","SIP library (pjsua2) is not loaded — paging is disabled. You can still edit all settings in this mode.":"مكتبة SIP (pjsua2) غير محمّلة — البث معطّل. لا يزال بإمكانك تعديل كل الإعدادات في هذا الوضع.","Paging mode":"وضع البث","Ring timeout (s)":"مهلة الرنين (ث)","Max call length (s)":"أقصى مدة اتصال (ث)","Delay after answer (ms)":"التأخير بعد الرد (مللي ث)","Hang up after audio (ms)":"إنهاء بعد الصوت (مللي ث)","Outbound proxy (optional)":"وكيل صادر (اختياري)","Registrar port":"منفذ المسجّل","Local bind port":"منفذ الربط المحلي","Register expiry (s)":"انتهاء التسجيل (ث)","Audio files":"ملفات الصوت","Processing":"جارٍ المعالجة","Stop current page":"إيقاف البث الحالي","Stop the active page?":"إيقاف البث النشط؟","This will immediately stop the active page/call. Continue?":"سيتم إيقاف البث أو الاتصال النشط فوراً. هل تريد المتابعة؟","Stopping…":"جارٍ الإيقاف…","Stopping":"جارٍ الإيقاف","Active page stopped":"تم إيقاف البث النشط","No active call to stop":"لا يوجد اتصال نشط لإيقافه","Stop failed":"فشل الإيقاف","Request timed out. The backend did not confirm the result. Check active call status and logs.":"انتهت مهلة الطلب. لم تؤكّد الخدمة النتيجة. تحقّق من حالة الاتصال النشط والسجلات.","Dialing":"جارٍ الاتصال","Connected":"متصل","Playing":"جارٍ التشغيل","Finishing":"يُنهي","Manually stopped":"تم الإيقاف يدوياً","updated":"حُدّث","in":"خلال","now":"الآن","Last updated":"آخر تحديث","connection lost":"الاتصال منقطع","Offline / stale":"غير متصل / قديم","Backend connection lost. Showing last known status from":"انقطع الاتصال بالخدمة. يتم عرض آخر حالة معروفة من","Save or discard your changes before changing the language.":"احفظ التغييرات أو تراجع عنها قبل تغيير اللغة.","Timetable imported. Prayer time source changed to Manual.":"تم استيراد الجدول. تم تغيير مصدر أوقات الصلاة إلى يدوي.","◐ Auto":"◐ تلقائي","🌙 Dark":"🌙 داكن","☀ Light":"☀ فاتح","Ready":"جاهز","Could not load prayer timeline. Showing last known values.":"تعذّر تحميل جدول الصلاة. يتم عرض آخر القيم المعروفة.","Could not load timetable status":"تعذّر تحميل حالة الجدول المستورد","Location mode":"وضع تحديد الموقع","Select by country / city":"التحديد حسب الدولة / المدينة","Manual coordinates":"إحداثيات يدوية","Country":"الدولة","City":"المدينة","Select country":"اختر الدولة","Search city":"ابحث عن مدينة","Search by city name, Arabic name, or ISO code":"ابحث بالاسم أو الاسم العربي أو رمز ISO","No matches":"لا توجد نتائج","No location selected":"لم يتم تحديد موقع","Advanced manual override":"تجاوز يدوي متقدّم","Recommended calculation method":"طريقة الحساب المقترحة","Apply recommended":"تطبيق المقترحة","Keep current method":"الإبقاء على الحالية","Recommended method applied":"تم تطبيق الطريقة المقترحة","Select a city, or switch to manual coordinates.":"اختر مدينة، أو بدّل إلى الإحداثيات اليدوية.","Used when a prayer has no specific file":"يُستخدم عندما لا يكون للصلاة ملف محدد","Overrides the per-prayer adhan files below":"يتجاوز ملفات الأذان لكل صلاة بالأسفل","Used when a prayer has no specific iqama file":"يُستخدم عندما لا يكون للصلاة ملف إقامة محدد","e.g. Africa/Tripoli":"مثال: Africa/Tripoli","PBX host, e.g. pbx.tanasuh.local":"عنوان مقسّم PBX، مثال: pbx.tanasuh.local","host:port":"المضيف:المنفذ","Manual uses the file you import below; calculated uses lat/long + method":"الوضع اليدوي يستخدم الملف الذي تستورده أدناه؛ والوضع المحسوب يستخدم الإحداثيات وطريقة الحساب","Search by country name or ISO code":"ابحث باسم الدولة أو رمز ISO","Search by city name or alternate/local name":"ابحث باسم المدينة أو الاسم المحلي/البديل","Select country first":"اختر الدولة أولاً","City list is based on the bundled offline city database. If your exact location is missing, use Manual coordinates.":"تعتمد قائمة المدن على قاعدة بيانات محلية مدمجة. إذا لم تجد موقعك بدقة، استخدم الإحداثيات اليدوية.","Please select a country from the list.":"يرجى اختيار دولة من القائمة.","Please select a city from the list.":"يرجى اختيار مدينة من القائمة.","Invalid timezone. Use a valid IANA timezone such as Africa/Tripoli.":"منطقة زمنية غير صحيحة. استخدم منطقة IANA صحيحة مثل Africa/Tripoli.","Location database is unavailable. Use manual coordinates or check installation.":"قاعدة بيانات المواقع غير متاحة. استخدم الإحداثيات اليدوية أو تحقق من التثبيت.","Recommended method applied. Remember to save both Location and Schedule.":"تم تطبيق الطريقة المقترحة. تذكّر حفظ الموقع والجدول معاً.","Add at least one destination before saving.":"أضف وجهة واحدة على الأقل قبل الحفظ.","enabled":"مفعّلة","None — paging will not run":"لا شيء — لن يعمل البث","No destinations enabled. Paging will not run until you add and enable at least one destination.":"لا توجد وجهات مفعّلة. لن يعمل البث حتى تضيف وجهة واحدة وتفعّلها على الأقل.","Saved, but no destinations are enabled — paging will not run.":"تم الحفظ، لكن لا توجد وجهات مفعّلة — لن يعمل البث.","Save location and calculation method":"حفظ الموقع وطريقة الحساب","Saved location and calculation method":"تم حفظ الموقع وطريقة الحساب","Middle of the night":"منتصف الليل","Seventh of the night":"سُبع الليل","Twilight angle":"زاوية الشفق","Coordinates from selected city":"الإحداثيات من المدينة المحددة","These come from the selected city. To edit them, switch Location mode to Manual coordinates.":"هذه مأخوذة من المدينة المحددة. لتعديلها، بدّل وضع الموقع إلى الإحداثيات اليدوية.","Sign in":"تسجيل الدخول","Enter your administrator credentials.":"أدخل بيانات اعتماد المسؤول.","Username":"اسم المستخدم","Keep me signed in (7 days)":"إبقني مسجّلاً (7 أيام)","Invalid username or password.":"اسم المستخدم أو كلمة المرور غير صحيحة.","Session expired. Please log in again.":"انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.","Change your password":"غيّر كلمة المرور","Default password must be changed before using the system.":"يجب تغيير كلمة المرور الافتراضية قبل استخدام النظام.","Current password":"كلمة المرور الحالية","New password":"كلمة المرور الجديدة","Confirm password":"تأكيد كلمة المرور","Save password":"حفظ كلمة المرور","Signing in…":"جارٍ تسجيل الدخول…","Logout":"تسجيل الخروج","Account":"الحساب","Manage your login credentials and personal preferences.":"إدارة بيانات الدخول والتفضيلات الشخصية.","Logged in as":"مسجّل الدخول باسم","Role":"الدور","Administrator":"مسؤول","Last login":"آخر تسجيل دخول","Password status":"حالة كلمة المرور","Change username":"تغيير اسم المستخدم","New username":"اسم المستخدم الجديد","Save username":"حفظ اسم المستخدم","Preferences":"التفضيلات","Language":"اللغة","Theme":"المظهر","Accent color":"لون الواجهة","Save preferences":"حفظ التفضيلات","Passwords do not match.":"كلمتا المرور غير متطابقتين.","At least 8 characters.":"٨ أحرف على الأقل.","Strength":"القوة","weak":"ضعيفة","fair":"مقبولة","good":"جيدة","strong":"قوية","OK":"سليمة","Default password — change required":"كلمة المرور الافتراضية — يلزم التغيير","Password updated":"تم تحديث كلمة المرور","Username updated":"تم تحديث اسم المستخدم","Preferences saved":"تم حفظ التفضيلات","Too many attempts. Please wait a few minutes.":"محاولات كثيرة. يرجى الانتظار بضع دقائق.","Could not reach the server.":"تعذّر الوصول إلى الخادم.","Enter username and password.":"أدخل اسم المستخدم وكلمة المرور.","Enter a new username.":"أدخل اسم مستخدم جديد.","Unsaved preferences":"تفضيلات غير محفوظة"}};
 function t(s){ if(LANG==="ar" && I18N.ar[s]!==undefined) return I18N.ar[s]; return s; }
 
 const $=s=>document.querySelector(s);
@@ -528,15 +662,23 @@ const el=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Obje
   if(x==="class")e.className=v;else if(x==="html")e.innerHTML=v;else if(x.startsWith("on"))e.addEventListener(x.slice(2),v);else e.setAttribute(x,v);}
   k.forEach(c=>e.append(c.nodeType?c:document.createTextNode(c)));return e;};
 
+function csrfToken(){const m=document.cookie.match(/(?:^|;\s*)ap_csrf=([^;]+)/);return m?decodeURIComponent(m[1]):"";}
 async function api(path,method="GET",body,opts={}){
   const o={method,headers:{}};
   if(body!==undefined){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(body);}
+  if(method!=="GET"&&method!=="HEAD"){const c=csrfToken();if(c)o.headers["X-CSRF-Token"]=c;}
   let timer=null;
   if(opts.timeoutMs){const ac=new AbortController();o.signal=ac.signal;
     timer=setTimeout(()=>ac.abort(),opts.timeoutMs);}
   try{
     const r=await fetch(path,o);
-    if(!r.ok){const tx=await r.text();throw new Error(tx||r.statusText);}
+    if(r.status===401&&!opts.noAuthRedirect){onSessionExpired();throw new Error("__unauth__");}
+    if(!r.ok){
+      let msg=r.statusText;
+      try{const j=await r.json();msg=j.detail||j.error||JSON.stringify(j);}
+      catch(e){try{msg=(await r.text())||r.statusText;}catch(e2){}}
+      throw new Error(msg);
+    }
     return await r.json();
   }catch(e){
     if(e.name==="AbortError")throw new Error("__timeout__");
@@ -555,6 +697,13 @@ let NEXT_RUN=null;            // ISO time of next page, for the live countdown
 let LAST_OK_TS=null;         // last successful /api/status
 let STALE=false;             // backend polling currently failing?
 function kindLabel(k){const ar={adhan:"أذان",iqama:"إقامة",test:"تجربة"};return LANG==="ar"?(ar[k]||k):k;}
+// Operational enum values -> Arabic (technical tokens stay English/LTR via .ltr/.mono).
+const ENUM_AR={sequential:"تسلسلي",parallel:"متوازي",all:"الكل",single:"وجهة واحدة",
+  enabled:"مفعّل",disabled:"معطّل",manual:"يدوي",calculated:"محسوب",idle:"خامل",active:"نشط",
+  playing:"جارٍ التشغيل",dialing:"جارٍ الاتصال",connected:"متصل",failed:"فشل",completed:"اكتمل",
+  cancelled:"أُلغي",canceled:"أُلغي",ringing:"يرن",finishing:"يُنهي",stopped:"متوقّف"};
+function labelEnum(v){if(v==null)return v;const k=String(v).toLowerCase();
+  return LANG==="ar"?(ENUM_AR[k]||v):v;}
 // localize a server-provided label like "Fajr adhan" / "Test · file.wav" (filenames kept)
 function localizeText(s){if(LANG!=="ar"||!s)return s;let out=s;
   Object.entries(PR_EN).forEach(([k,en])=>{out=out.replace(new RegExp("\\b"+en+"\\b","g"),AR[k]);});
@@ -611,10 +760,12 @@ function uploadWithProgress(url,file,prog){
   return new Promise((resolve,reject)=>{
     const fd=new FormData();fd.append("file",file);
     const xhr=new XMLHttpRequest();xhr.open("POST",url);
+    const csrf=csrfToken();if(csrf)xhr.setRequestHeader("X-CSRF-Token",csrf);
     xhr.upload.onprogress=e=>{if(e.lengthComputable&&prog)prog(Math.round(100*e.loaded/e.total));};
     xhr.upload.onload=()=>{if(prog)prog(100,true);};
     xhr.onload=()=>{
       let body=null;try{body=JSON.parse(xhr.responseText);}catch(e){}
+      if(xhr.status===401){onSessionExpired();reject(new Error("__unauth__"));return;}
       if(xhr.status>=200&&xhr.status<300)resolve(body??{});
       else reject(new Error((body&&(body.detail||body.error))||xhr.responseText||("HTTP "+xhr.status)));
     };
@@ -697,7 +848,7 @@ async function runTest(opts,btn){
   if(opts.prayer)detail[t("Prayer")||"Prayer"]=prayerLabel(opts.prayer);
   if(opts.file)detail[t("File")||"File"]=opts.file;
   detail[t("Destinations")||"Destinations"]=dests.map(x=>x.uri||x.name).join(", ");
-  detail[t("Mode")||"Mode"]=CFG.call.mode;
+  detail[t("Mode")||"Mode"]=labelEnum(CFG.call.mode);
   const go=await confirmDialog({title:t("Start a live test page?")||"Start a live test page?",danger:true,
     message:t("Real audio will play on the enabled destinations. Make sure the speakers / paging system are ready before continuing.")
       ||"Real audio will play on the enabled destinations. Make sure the speakers / paging system are ready before continuing.",
@@ -770,7 +921,7 @@ const VALIDATORS={
     if(!isNum(F.longitude.value)||+F.longitude.value<-180||+F.longitude.value>180)ok=markErr(F.longitude,t("Longitude must be between -180 and 180."))&&ok;
     const tzv=(F.timezone.value||"").trim();
     if(!tzv)ok=markErr(F.timezone,t("Timezone is required."))&&ok;
-    else if(!isValidTz(tzv))ok=markErr(F.timezone,t("Invalid timezone. Use a valid IANA timezone such as Etc/UTC."))&&ok;
+    else if(!isValidTz(tzv))ok=markErr(F.timezone,t("Invalid timezone. Use a valid IANA timezone such as Africa/Tripoli."))&&ok;
     return ok;},
   ntp(F){let ok=true;
     if(F.enabled.checked&&!F.server.value.trim())ok=markErr(F.server,t("NTP server is required."));
@@ -805,6 +956,11 @@ function buildNav(){
   });
 }
 function show(id){
+  // Leaving the Account tab with unsaved preference changes -> discard the live preview
+  const cur=[...document.querySelectorAll(".panel")].find(p=>p.classList.contains("active"));
+  if(cur&&cur.dataset.tab==="account"&&id!=="account"&&PREFS_DIRTY&&ME){
+    applyAccent(ME.accent_color||"default");fillAccount(ME);
+  }
   document.querySelectorAll(".nav button").forEach((b,i)=>b.classList.toggle("active",TABS[i][0]===id));
   document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.dataset.tab===id));
   if(id==="audio")loadAudio();
@@ -831,7 +987,7 @@ function renderSip(){
   F.password=txt(s.password,{type:"password",class:"ltr"}); F.display_name=txt(s.display_name);
   F.register_expires=num(s.register_expires);
   f.append(
-    field("Registrar / SIP domain",F.registrar,"PBX host, e.g. sip.example.net"),
+    field("Registrar / SIP domain",F.registrar,"PBX host, e.g. pbx.tanasuh.local"),
     field("Outbound proxy (optional)",F.proxy,"host:port"),
     field("Registrar port",F.port), field("Local bind port",F.local_port),
     field("Transport",F.transport),
@@ -961,7 +1117,7 @@ function setFoot(){const l=CFG&&CFG.location;if(!l)return;
   else{const city=(LANG==="ar"&&l.city_local_name)?l.city_local_name:l.city;
     const country=(LANG==="ar")?(l.country_local_name||arRegion(l.country_code)||l.country_name):l.country_name;
     place=[city,country].filter(Boolean).join(LANG==="ar"?"، ":", ");}
-  $("#foot").textContent="v1.6 · "+(place?place+" · ":"")+l.timezone;}
+  $("#foot").textContent="v"+(APP_VER||"?")+" · "+(place?place+" · ":"")+l.timezone;}
 async function ensureCountries(){
   if(COUNTRIES)return COUNTRIES;
   try{COUNTRIES=(await api("/api/geo/countries",undefined,undefined,{timeoutMs:10000})).countries;}
@@ -1032,7 +1188,7 @@ function renderLoc(){
 
   const latI=num(l.latitude,{step:"any",class:"ltr"}),lngI=num(l.longitude,{step:"any",class:"ltr"}),tzI=txt(l.timezone,{class:"ltr"});
   const advWrap=el("div",{}),advGrid=el("div",{class:"grid"});
-  advGrid.append(field("Latitude",latI),field("Longitude",lngI),field("Timezone (IANA)",tzI,"e.g. Etc/UTC"));
+  advGrid.append(field("Latitude",latI),field("Longitude",lngI),field("Timezone (IANA)",tzI,"e.g. Africa/Tripoli"));
   const advTitle=el("div",{class:"adv-toggle"},"⚙ "+(t("Advanced manual override")||"Advanced manual override"));
   const advNote=el("div",{class:"hint",style:"margin:4px 0"});
   advWrap.append(advTitle,advNote,advGrid);host.append(advWrap);
@@ -1569,6 +1725,165 @@ async function loadConfig(){
   }
 }
 
+// ===== Authentication client =====
+let ME=null, APP_BOOTED=false, SESSION_LOST=false, CURRENT_ACCENT="default", APP_VER="";
+const ACCENTS={default:["#c9a24b","#e3c27e"],blue:["#4a90d9","#7bb4ec"],green:["#3fae6b","#6fd99a"],
+  amber:["#e0a93b","#f0c878"],red:["#d96a6a","#ec9a9a"],purple:["#9a6ad9","#bf9aec"]};
+function applyAccent(name){const a=ACCENTS[name]||ACCENTS.default;CURRENT_ACCENT=ACCENTS[name]?name:"default";
+  document.documentElement.style.setProperty("--brass",a[0]);
+  document.documentElement.style.setProperty("--brass-2",a[1]);
+  try{localStorage.setItem("ap_accent",CURRENT_ACCENT);}catch(e){}}
+function showLoginErr(m){const e=$("#loginErr");e.textContent=m;e.classList.add("show");}
+function hideLoginErr(){$("#loginErr").classList.remove("show");}
+function showLogin(msg){document.body.classList.remove("authed");
+  $("#loginCard").style.display="";$("#forceCard").style.display="none";
+  if(msg)showLoginErr(msg);else hideLoginErr();
+  applyI18n();setTimeout(()=>{try{$("#loginUser").focus();}catch(e){}},50);}
+function showForcedChange(){document.body.classList.remove("authed");
+  $("#loginCard").style.display="none";$("#forceCard").style.display="";applyI18n();}
+function onSessionExpired(){if(SESSION_LOST)return;SESSION_LOST=true;stopPolling();
+  showLogin(t("Session expired. Please log in again.")||"Session expired. Please log in again.");}
+
+async function authBoot(){
+  let lt="auto",ll="en",ac="default";
+  try{lt=localStorage.getItem("ap_theme")||"auto";ll=localStorage.getItem("ap_lang")||"en";ac=localStorage.getItem("ap_accent")||"default";}catch(e){}
+  LANG=ll;$("#langSel").value=ll;$("#themeSel").value=lt;setTheme(lt);applyAccent(ac);
+  document.documentElement.setAttribute("lang",ll);
+  document.documentElement.setAttribute("dir",ll==="ar"?"rtl":"ltr");
+  $("#authLang").value=ll;$("#authTheme").value=lt;applyI18n();
+  let me;
+  try{me=await fetch("/api/auth/me",{headers:{"Cache-Control":"no-store"}}).then(r=>r.json());}catch(e){me={authenticated:false};}
+  if(!me||!me.authenticated){showLogin();return;}
+  ME=me;
+  if(me.must_change_password){showForcedChange();return;}
+  await enterApp(me);
+}
+async function enterApp(me){
+  ME=me;SESSION_LOST=false;
+  if(me.language){LANG=me.language;$("#langSel").value=me.language;}
+  if(me.theme){$("#themeSel").value=me.theme;setTheme(me.theme);}
+  applyAccent(me.accent_color||"default");
+  try{localStorage.setItem("ap_lang",LANG);localStorage.setItem("ap_theme",me.theme||"auto");}catch(e){}
+  document.body.classList.add("authed");
+  fillAccount(me);
+  if(!APP_BOOTED){APP_BOOTED=true;await boot();}
+  else{setLang(LANG);}
+  startPolling();
+}
+let PREFS_DIRTY=false;
+function markPrefsDirty(){PREFS_DIRTY=true;const b=$("#btnSavePrefs");if(b)b.classList.add("attn");const h=$("#prefsDirty");if(h)h.style.display="";}
+function clearPrefsDirty(){PREFS_DIRTY=false;const b=$("#btnSavePrefs");if(b)b.classList.remove("attn");const h=$("#prefsDirty");if(h)h.style.display="none";}
+function persistPrefs(){if(!ME)return;const theme=$("#themeSel").value;
+  ME.language=LANG;ME.theme=theme;
+  $("#accLang").value=LANG;$("#accTheme").value=theme;       // keep Account tab in sync
+  api("/api/auth/preferences","POST",{language:LANG,theme,accent_color:ME.accent_color||"default"}).catch(()=>{});}
+
+function fillAccount(me){
+  if(!me)return;
+  $("#acctUser").textContent=me.username;
+  $("#acctLast").textContent=me.last_login?new Date(me.last_login*1000).toLocaleString():"—";
+  const ps=$("#acctPwStatus");
+  if(me.must_change_password){ps.textContent=t("Default password — change required")||"Default password — change required";ps.style.color="var(--bad)";}
+  else{ps.textContent=t("OK")||"OK";ps.style.color="var(--good)";}
+  $("#accLang").value=me.language||"en";$("#accTheme").value=me.theme||"auto";
+  $("#accNewUser").value="";$("#accNewUser").placeholder=me.username;
+  // accent swatches
+  const row=$("#accentRow");row.innerHTML="";
+  Object.keys(ACCENTS).forEach(name=>{
+    const sw=el("div",{class:"swatch"+(name===(me.accent_color||"default")?" sel":""),title:name,
+      style:"background:"+ACCENTS[name][0],onclick:()=>{applyAccent(name);
+        row.querySelectorAll(".swatch").forEach(s=>s.classList.remove("sel"));sw.classList.add("sel");markPrefsDirty();}});
+    row.append(sw);
+  });
+  clearPrefsDirty();
+}
+function pwHint(el2,val,user){
+  if(!val){el2.textContent="";el2.className="pwhint";return false;}
+  if(val.length<8){el2.textContent=t("At least 8 characters.")||"At least 8 characters.";el2.className="pwhint weak";return false;}
+  // simple client strength
+  let s=0;if(val.length>=12)s++;if(/[a-z]/.test(val)&&/[A-Z]/.test(val))s++;if(/\d/.test(val))s++;if(/[^a-zA-Z0-9]/.test(val))s++;
+  const lvl=["weak","weak","fair","good","strong"][s];
+  el2.textContent=(t("Strength")||"Strength")+": "+(t(lvl)||lvl);el2.className="pwhint "+lvl;return true;
+}
+
+async function doLogin(){
+  const btn=$("#loginBtn"),u=$("#loginUser").value.trim(),p=$("#loginPass").value;
+  if(!u||!p){showLoginErr(t("Enter username and password.")||"Enter username and password.");return;}
+  btn.disabled=true;const old=btn.textContent;btn.textContent=t("Signing in…")||"Signing in…";
+  try{
+    const r=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username:u,password:p,remember:$("#loginRemember").checked})});
+    let j={};try{j=await r.json();}catch(e){}
+    if(!r.ok||!j.ok){
+      showLoginErr(r.status===429?(t("Too many attempts. Please wait a few minutes.")||"Too many attempts. Please wait a few minutes.")
+        :(t("Invalid username or password.")||"Invalid username or password."));
+      return;}
+    hideLoginErr();$("#loginPass").value="";SESSION_LOST=false;
+    if(j.must_change_password){ME=j;showForcedChange();return;}
+    await enterApp(j);
+  }catch(e){showLoginErr(t("Could not reach the server.")||"Could not reach the server.");}
+  finally{btn.disabled=false;btn.textContent=old;}
+}
+async function doForcedChange(){
+  const btn=$("#fcBtn"),cur=$("#fcCurrent").value,nw=$("#fcNew").value,cf=$("#fcConfirm").value,err=$("#fcErr");
+  err.classList.remove("show");
+  if(nw.length<8){err.textContent=t("At least 8 characters.")||"At least 8 characters.";err.classList.add("show");return;}
+  if(nw!==cf){err.textContent=t("Passwords do not match.")||"Passwords do not match.";err.classList.add("show");return;}
+  btn.disabled=true;const old=btn.textContent;btn.textContent=t("Saving…")||"Saving…";
+  try{
+    const j=await api("/api/auth/change-password","POST",{current_password:cur,new_password:nw});
+    $("#fcCurrent").value=$("#fcNew").value=$("#fcConfirm").value="";
+    await enterApp(j);
+    toast(t("Password updated")||"Password updated");
+  }catch(e){if(e.message!=="__unauth__"){err.textContent=e.message;err.classList.add("show");}}
+  finally{btn.disabled=false;btn.textContent=old;}
+}
+async function doLogout(){
+  try{await api("/api/auth/logout","POST",{},{noAuthRedirect:true});}catch(e){}
+  location.reload();
+}
+function wireAuth(){
+  $("#loginBtn").addEventListener("click",doLogin);
+  $("#loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+  $("#loginUser").addEventListener("keydown",e=>{if(e.key==="Enter")$("#loginPass").focus();});
+  $("#authLang").addEventListener("change",e=>{LANG=e.target.value;$("#langSel").value=LANG;
+    try{localStorage.setItem("ap_lang",LANG);}catch(x){}
+    document.documentElement.setAttribute("lang",LANG);
+    document.documentElement.setAttribute("dir",LANG==="ar"?"rtl":"ltr");applyI18n();});
+  $("#authTheme").addEventListener("change",e=>{$("#themeSel").value=e.target.value;setTheme(e.target.value);
+    try{localStorage.setItem("ap_theme",e.target.value);}catch(x){}});
+  $("#fcBtn").addEventListener("click",doForcedChange);
+  $("#fcNew").addEventListener("input",e=>pwHint($("#fcHint"),e.target.value,""));
+  $("#fcConfirm").addEventListener("keydown",e=>{if(e.key==="Enter")doForcedChange();});
+  $("#fcLogout").addEventListener("click",doLogout);
+  $("#btnLogout").addEventListener("click",doLogout);
+  // account tab
+  $("#accNewPw").addEventListener("input",e=>pwHint($("#accPwHint"),e.target.value,ME?ME.username:""));
+  $("#btnSaveUser").addEventListener("click",async e=>{
+    const nu=$("#accNewUser").value.trim();if(!nu){toast(t("Enter a new username.")||"Enter a new username.",true);return;}
+    await withBtn(e.target,async()=>{try{const j=await api("/api/auth/update-account","POST",{username:nu});
+      ME=j;fillAccount(j);toast(t("Username updated")||"Username updated");}
+      catch(err){if(err.message!=="__unauth__")toast(err.message,true);}},t("Saving…")||"Saving…");});
+  $("#btnSavePw").addEventListener("click",async e=>{
+    const cur=$("#accCurPw").value,nw=$("#accNewPw").value,cf=$("#accConfPw").value;
+    if(nw!==cf){toast(t("Passwords do not match.")||"Passwords do not match.",true);return;}
+    await withBtn(e.target,async()=>{try{const j=await api("/api/auth/change-password","POST",{current_password:cur,new_password:nw});
+      $("#accCurPw").value=$("#accNewPw").value=$("#accConfPw").value="";$("#accPwHint").textContent="";ME=j;fillAccount(j);
+      toast(t("Password updated")||"Password updated");}
+      catch(err){if(err.message!=="__unauth__")toast(err.message,true);}},t("Saving…")||"Saving…");});
+  $("#accLang").addEventListener("change",markPrefsDirty);
+  $("#accTheme").addEventListener("change",markPrefsDirty);
+  $("#btnSavePrefs").addEventListener("click",async e=>{
+    const lang=$("#accLang").value,theme=$("#accTheme").value;
+    await withBtn(e.target,async()=>{try{const j=await api("/api/auth/update-account","POST",
+        {preferences:{language:lang,theme:theme,accent_color:CURRENT_ACCENT}});
+      ME=j;$("#themeSel").value=theme;setTheme(theme);applyAccent(j.accent_color||CURRENT_ACCENT);
+      if(lang!==LANG&&!DIRTY.size){$("#langSel").value=lang;setLang(lang);}
+      try{localStorage.setItem("ap_theme",theme);localStorage.setItem("ap_lang",lang);}catch(x){}
+      clearPrefsDirty();toast(t("Preferences saved")||"Preferences saved");}
+      catch(err){if(err.message!=="__unauth__")toast(err.message,true);}},t("Saving…")||"Saving…");});
+}
+
 // ---- init ----
 async function init(){
   let savedTheme="auto",savedLang="en";
@@ -1579,7 +1894,8 @@ async function init(){
   $("#langSel").value=savedLang;
   $("#bootRetry").addEventListener("click",()=>{$("#bootRetry").disabled=true;
     boot().finally(()=>$("#bootRetry").disabled=false);});
-  $("#themeSel").addEventListener("change",e=>setTheme(e.target.value));
+  $("#themeSel").addEventListener("change",e=>{setTheme(e.target.value);
+    try{localStorage.setItem("ap_theme",e.target.value);}catch(x){}persistPrefs();});
   $("#langSel").addEventListener("change",async e=>{
     if(DIRTY.size){
       e.target.value=LANG;   // revert the selector
@@ -1589,18 +1905,32 @@ async function init(){
       return;
     }
     setLang(e.target.value);
+    try{localStorage.setItem("ap_lang",e.target.value);}catch(x){}persistPrefs();
   });
   // unsaved-changes guard
-  window.addEventListener("beforeunload",e=>{if(DIRTY.size){e.preventDefault();e.returnValue="";}});
-  await boot();
-  setInterval(tickClock,1000);tickClock();
-  setInterval(()=>{refreshStatus();
+  window.addEventListener("beforeunload",e=>{if(DIRTY.size||PREFS_DIRTY){e.preventDefault();e.returnValue="";}});
+  wireAuth();
+  await authBoot();
+  setInterval(tickClock,1000);tickClock();   // clock makes no API calls — always safe
+}
+
+// Status/timeline polling only runs while authenticated and inside the app.
+let _statusTimer=null,_timelineTimer=null;
+function startPolling(){
+  if(_statusTimer)return;
+  _statusTimer=setInterval(()=>{refreshStatus();
     if(document.querySelector('.panel[data-tab="logs"]').classList.contains("active")&&!_logTimer)loadLogs();},3000);
-  setInterval(loadTimeline,60000);
+  _timelineTimer=setInterval(loadTimeline,60000);
+}
+function stopPolling(){
+  if(_statusTimer){clearInterval(_statusTimer);_statusTimer=null;}
+  if(_timelineTimer){clearInterval(_timelineTimer);_timelineTimer=null;}
+  if(typeof _logTimer!=="undefined"&&_logTimer){clearInterval(_logTimer);_logTimer=null;}
 }
 
 async function boot(){
   if(!await loadConfig())return;
+  try{APP_VER=(await api("/api/version",undefined,undefined,{noAuthRedirect:true})).version;}catch(e){}
   setFoot();
   hydrate(()=>{renderSip();renderDest();renderLoc();renderCodecs();renderNtp();renderSchedule(null);});
   setLang(LANG);                 // applies dir/i18n + re-renders (hydration-guarded internally)
@@ -1676,10 +2006,12 @@ function wireActions(){
   // logs
   $("#btnRefreshLog").addEventListener("click",e=>withBtn(e.target,loadLogs,t("Refresh")||"Refresh"));
   $("#btnExportLog").addEventListener("click",async(e)=>{await withBtn(e.target,async()=>{
-    try{const r=await fetch("/api/logs/export");if(!r.ok)throw new Error("HTTP "+r.status);
+    try{const r=await fetch("/api/logs/export");
+      if(r.status===401){onSessionExpired();throw new Error("__unauth__");}
+      if(!r.ok)throw new Error("HTTP "+r.status);
       const blob=await r.blob();const u=URL.createObjectURL(blob);const a=document.createElement("a");
       a.href=u;a.download="adhan-pager.log";a.click();URL.revokeObjectURL(u);toast(t("Exported")||"Exported");}
-    catch(err){toast((t("Export failed")||"Export failed")+": "+err.message,true);}},t("Exporting…")||"Exporting…");});
+    catch(err){if(err.message!=="__unauth__")toast((t("Export failed")||"Export failed")+": "+err.message,true);}},t("Exporting…")||"Exporting…");});
   $("#logFilter").addEventListener("change",loadLogs);
   $("#logLive").addEventListener("change",e=>setLogLive(e.target.checked));
   // reset upload progress when a new file is chosen

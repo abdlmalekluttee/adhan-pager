@@ -6,16 +6,17 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import audio, config, ntp, prayer, scheduler, sip_engine, timetable, logbuf
+from . import audio, config, ntp, prayer, scheduler, sip_engine, timetable, logbuf, auth
 
 logbuf.setup(logging.INFO)
 log = logging.getLogger("main")
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+APP_VERSION = "1.7.0"   # single source of truth — also surfaced via /api/version
 _ntp_stop = None
 
 
@@ -23,6 +24,9 @@ _ntp_stop = None
 async def lifespan(app: FastAPI):
     config.load()
     log.info("Adhan Pager starting")
+    _se = auth.store_error()
+    if _se:
+        log.error("AUTH STORE ERROR: %s", _se)
     global _ntp_stop
     _ntp_stop = ntp.start()
     sip_engine.get_engine().start()
@@ -33,7 +37,148 @@ async def lifespan(app: FastAPI):
     sip_engine.get_engine().shutdown()
 
 
-app = FastAPI(title="Adhan Pager", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Adhan Pager", version=APP_VERSION, lifespan=lifespan)
+
+
+# --------------------------------------------------------------------------- #
+# Authentication layer
+# --------------------------------------------------------------------------- #
+_PUBLIC_EXACT = {"/", "/favicon.ico", "/api/auth/login", "/api/auth/me", "/api/version"}
+# While must_change_password is true, ONLY these endpoints are reachable.
+_FORCED_ALLOW = {"/api/auth/me", "/api/auth/change-password", "/api/auth/logout"}
+
+
+def _set_session_cookies(resp: Response, user: dict, remember: bool):
+    max_age = auth.REMEMBER_MAX_AGE if remember else auth.DEFAULT_MAX_AGE
+    resp.set_cookie(auth.SESSION_COOKIE, auth.issue_token(user), max_age=max_age,
+                    httponly=True, samesite="lax", secure=auth.COOKIE_SECURE, path="/")
+    resp.set_cookie(auth.CSRF_COOKIE, auth.new_csrf(), max_age=max_age,
+                    httponly=False, samesite="lax", secure=auth.COOKIE_SECURE, path="/")
+
+
+def _clear_session_cookies(resp: Response):
+    resp.delete_cookie(auth.SESSION_COOKIE, path="/")
+    resp.delete_cookie(auth.CSRF_COOKIE, path="/")
+
+
+@app.middleware("http")
+async def auth_guard(request: Request, call_next):
+    path = request.url.path
+    request.state.user = auth.verify_token(request.cookies.get(auth.SESSION_COOKIE, ""))
+    is_api = path.startswith("/api/")
+    public = (path in _PUBLIC_EXACT) or path.startswith("/static/")
+
+    if not public:
+        user = request.state.user
+        if not user:
+            return JSONResponse({"detail": "Not authenticated"}, status_code=401)
+        # Forced password change: only session-check, password-change, logout allowed
+        if user.get("must_change_password") and path not in _FORCED_ALLOW:
+            return JSONResponse({"detail": "Password change required"}, status_code=403)
+        # CSRF (double-submit) for state-changing requests
+        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+            cok = request.cookies.get(auth.CSRF_COOKIE, "")
+            if not cok or request.headers.get("x-csrf-token", "") != cok:
+                return JSONResponse({"detail": "CSRF token missing or invalid"}, status_code=403)
+
+    resp = await call_next(request)
+    if is_api:
+        resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.post("/api/auth/login")
+async def auth_login(request: Request, payload: dict):
+    store_err = auth.store_error()
+    if store_err:
+        log.error("auth: %s", store_err)
+        return JSONResponse(
+            {"ok": False, "error": "Authentication store is unavailable. Check server logs."},
+            status_code=503)
+    username = (payload.get("username") or "").strip()
+    password = payload.get("password") or ""
+    remember = bool(payload.get("remember"))
+    ip = request.client.host if request.client else "-"
+
+    locked = auth.is_locked(username, ip)
+    if locked:
+        return JSONResponse(
+            {"ok": False, "error": "Too many attempts. Try again later.",
+             "locked_seconds": locked}, status_code=429)
+
+    user = auth.authenticate(username, password)
+    if not user:
+        auth.record_fail(username, ip)
+        log.info("auth: failed login for '%s' from %s", username[:32], ip)
+        return JSONResponse({"ok": False, "error": "Invalid username or password"},
+                            status_code=401)
+
+    auth.reset_fails(username, ip)
+    auth.mark_login(user)
+    log.info("auth: login OK for '%s'", user["username"])
+    body = {"ok": True, **auth.public_profile(user)}
+    resp = JSONResponse(body)
+    _set_session_cookies(resp, user, remember)
+    return resp
+
+
+@app.post("/api/auth/logout")
+async def auth_logout(request: Request):
+    user = request.state.user
+    if user:
+        auth.logout_user(user)  # bump token_version -> any copied cookie is now dead
+        log.info("auth: logout for '%s'", user["username"])
+    resp = JSONResponse({"ok": True})
+    _clear_session_cookies(resp)
+    return resp
+
+
+@app.get("/api/auth/me")
+async def auth_me(request: Request):
+    user = request.state.user
+    if not user:
+        return {"authenticated": False}
+    return {"authenticated": True, **auth.public_profile(user)}
+
+
+@app.get("/api/version")
+async def app_version():
+    return {"version": APP_VERSION}
+
+
+@app.post("/api/auth/change-password")
+async def auth_change_password(request: Request, payload: dict):
+    user = request.state.user
+    err = auth.change_password(user, payload.get("current_password") or "",
+                               payload.get("new_password") or "")
+    if err:
+        raise HTTPException(400, err)
+    log.info("auth: password changed for '%s'", user["username"])
+    resp = JSONResponse({"ok": True, **auth.public_profile(user)})
+    _set_session_cookies(resp, user, False)  # re-issue (token_version bumped)
+    return resp
+
+
+@app.post("/api/auth/update-account")
+async def auth_update_account(request: Request, payload: dict):
+    user = request.state.user
+    new_username = payload.get("username")
+    prefs = payload.get("preferences") or {}
+    renamed = bool(new_username and new_username != user["username"])
+    err = auth.update_account(user, new_username, prefs)
+    if err:
+        raise HTTPException(400, err)
+    resp = JSONResponse({"ok": True, **auth.public_profile(user)})
+    if renamed:
+        _set_session_cookies(resp, user, False)  # token_version bumped on rename
+    return resp
+
+
+@app.post("/api/auth/preferences")
+async def auth_preferences(request: Request, payload: dict):
+    user = request.state.user
+    auth.save_preferences(user, payload or {})
+    return {"ok": True, **auth.public_profile(user)}
 
 
 # --------------------------------------------------------------------------- #

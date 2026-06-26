@@ -38,6 +38,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # `python` is symlinked to the Debian system interpreter above, but pip (and uvicorn at
 # runtime) use /usr/local's python3, which is where geonamescache actually installs.
 RUN python3 -c "import geonamescache as g; c=g.GeonamesCache(); assert len(c.get_cities())>1000 and len(c.get_countries())>100; print('geonamescache OK:', len(c.get_cities()), 'cities')"
+RUN python3 -c "import bcrypt, itsdangerous; print('auth deps OK')"
 
 # ---- app ----
 COPY app ./app

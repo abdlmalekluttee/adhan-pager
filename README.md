@@ -78,15 +78,29 @@ Then open:
 http://<server-ip>:8080
 ```
 
+### Default login
+
+On first run, sign in with:
+
+```text
+username: admin
+password: admin
+```
+
+The app immediately forces you to change the password before using the control panel.
+
+If you ever need to intentionally reset the login back to the default account, stop the container and delete `config/users.json`, then start the service again.
+
 ### First-time setup
 
-1. Open the web interface.
-2. Go to `Server` and enter your PBX address, username, password, transport, and port.
-3. Go to `Location` and select your city or enter manual coordinates and timezone.
-4. Upload your Adhan files from `Audio & files`.
-5. Add one or more destinations in `Destinations`.
-6. Choose your calculation method and enabled prayers in `Schedule`.
-7. Run `Test page now` from the dashboard to verify the full flow.
+1. Open the web interface and sign in with the default login above.
+2. Change the default password when prompted.
+3. Go to `Server` and enter your PBX address, username, password, transport, and port.
+4. Go to `Location` and select your city or enter manual coordinates and timezone.
+5. Upload your Adhan files from `Audio & files`.
+6. Add one or more destinations in `Destinations`.
+7. Choose your calculation method and enabled prayers in `Schedule`.
+8. Run `Test page now` from the dashboard to verify the full flow.
 
 ### Install from source (advanced)
 
@@ -192,15 +206,29 @@ git clone https://github.com/abdlmalekluttee/adhan-pager.git && cd adhan-pager &
 http://<server-ip>:8080
 ```
 
+### بيانات الدخول الافتراضية
+
+عند أول تشغيل، سجّل الدخول باستخدام:
+
+```text
+username: admin
+password: admin
+```
+
+سيطلب منك النظام تغيير كلمة المرور مباشرة قبل استخدام لوحة التحكم.
+
+وإذا أردت لاحقاً إعادة الحساب الافتراضي عمداً، أوقف الحاوية ثم احذف الملف `config/users.json` وبعدها شغّل الخدمة من جديد.
+
 ### خطوات الإعداد الأولى
 
-1. افتح واجهة الويب.
-2. من قسم `Server` أدخل عنوان السنترال واسم المستخدم وكلمة المرور ونوع النقل والمنفذ.
-3. من قسم `Location` اختر المدينة أو أدخل الإحداثيات والمنطقة الزمنية يدوياً.
-4. ارفع ملفات الأذان من قسم `Audio & files`.
-5. أضف الوجهات المطلوبة من قسم `Destinations`.
-6. اختر طريقة الحساب والصلوات المفعّلة من قسم `Schedule`.
-7. استخدم `Test page now` للتأكد من أن النظام يعمل بالكامل.
+1. افتح واجهة الويب وسجّل الدخول بالبيانات الافتراضية الموضحة أعلاه.
+2. غيّر كلمة المرور الافتراضية عند طلب ذلك.
+3. من قسم `Server` أدخل عنوان السنترال واسم المستخدم وكلمة المرور ونوع النقل والمنفذ.
+4. من قسم `Location` اختر المدينة أو أدخل الإحداثيات والمنطقة الزمنية يدوياً.
+5. ارفع ملفات الأذان من قسم `Audio & files`.
+6. أضف الوجهات المطلوبة من قسم `Destinations`.
+7. اختر طريقة الحساب والصلوات المفعّلة من قسم `Schedule`.
+8. استخدم `Test page now` للتأكد من أن النظام يعمل بالكامل.
 
 ### التثبيت من المصدر (للمتقدمين)
 

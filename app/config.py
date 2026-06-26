@@ -25,7 +25,7 @@ PRAYERS = ["fajr", "dhuhr", "asr", "maghrib", "isha"]
 
 class SipConfig(BaseModel):
     enabled: bool = True
-    registrar: str = "sip.example.net"        # SIP domain / registrar host
+    registrar: str = "pbx.example.local"      # SIP domain / registrar host
     proxy: str = ""                            # optional outbound proxy host[:port]
     port: int = 5060
     transport: Literal["udp", "tcp", "tls"] = "udp"
@@ -67,9 +67,9 @@ class CodecConfig(BaseModel):
 
 
 class LocationConfig(BaseModel):
-    latitude: float = 0.0                      # neutral example default
-    longitude: float = 0.0
-    timezone: str = "Etc/UTC"
+    latitude: float = 32.8872                  # Tripoli, Libya
+    longitude: float = 13.1913
+    timezone: str = "Africa/Tripoli"
     # City-picker selection (purely informational + lets the UI restore the choice)
     country_code: str = ""
     country_name: str = ""
@@ -88,7 +88,7 @@ class LocationConfig(BaseModel):
             ZoneInfo(v)
         except Exception:
             raise ValueError(
-                f"Invalid timezone '{v}'. Use a valid IANA timezone such as Etc/UTC."
+                f"Invalid timezone '{v}'. Use a valid IANA timezone such as Africa/Tripoli."
             )
         return v
 

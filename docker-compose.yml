@@ -11,7 +11,7 @@ services:
     network_mode: host
 
     environment:
-      - TZ=UTC                       # container OS timezone
+      - TZ=Africa/Tripoli            # container OS timezone
       - CONFIG_PATH=/config/config.yaml
       - AUDIO_DIR=/audio
 

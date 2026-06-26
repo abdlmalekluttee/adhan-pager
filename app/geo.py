@@ -180,6 +180,7 @@ def city_record(country_code: str, city: str = "", city_id: str = "",
         c = by_id.get(str(city_id))
         if c and c.get("countrycode", "").upper() == cc:
             return _format_record(cc, c)
+        return None  # id supplied but invalid -> do NOT silently fall back to name match
 
     name = (city or "").strip().lower()
     if not name:
