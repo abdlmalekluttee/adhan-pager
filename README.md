@@ -39,6 +39,70 @@ This is source-available, not a standard open-source commercial-use license. See
 - Offline city and country lookup using `geonamescache`.
 - Docker-based deployment with persistent config and audio storage.
 
+### Screenshots
+
+These screenshots show the main sections of the control panel so deployers can quickly understand the workflow before installation.
+
+#### Dashboard
+
+![Dashboard](assets/screenshots/dashboard.png)
+
+Live health overview with current time, backend status, SIP registration state, NTP sync, the next prayer page, and one-click test paging.
+
+#### SIP Registration
+
+![SIP Registration](assets/screenshots/sip-registration.png)
+
+Configure the PBX registrar, transport, username, authentication details, and reconnection behavior for the SIP account used by the service.
+
+#### Destinations
+
+![Destinations](assets/screenshots/destinations.png)
+
+Define the paging targets that receive the Adhan, including extensions, paging groups, and call behavior such as sequential or parallel paging.
+
+#### Schedule
+
+![Schedule](assets/screenshots/schedule.png)
+
+Choose the prayer-time source, calculation method, madhab, high-latitude rule, and per-prayer enable/adjust settings, including optional iqama paging.
+
+#### Audio & Files
+
+![Audio & files](assets/screenshots/audio-files.png)
+
+Upload Adhan audio, assign separate files per prayer, and manage iqama audio, resampling targets, and volume behavior.
+
+#### Codecs
+
+![Codecs](assets/screenshots/codecs.png)
+
+Prioritize SIP codecs for compatibility and audio quality, with clear control over preferred codecs such as `G722`, `PCMA`, and `PCMU`.
+
+#### Location
+
+![Location](assets/screenshots/location.png)
+
+Set the calculation location using the built-in offline country/city database or manual coordinates and timezone input.
+
+#### Time & NTP
+
+![Time & NTP](assets/screenshots/time-ntp.png)
+
+Monitor NTP health, offset, stratum, and synchronization timing, and control how often the service refreshes system time data.
+
+#### Logs
+
+![Logs](assets/screenshots/logs.png)
+
+Review live service logs for troubleshooting SIP registration, scheduling, audio, and runtime events, with export support for support and debugging.
+
+#### Account
+
+![Account](assets/screenshots/account.png)
+
+Manage the authenticated admin account, change the username and password, and review account-specific information from within the app.
+
 ### Recommended deployment
 
 - Use Docker on a Linux host when possible.
@@ -166,6 +230,70 @@ uvicorn app.main:app --host 0.0.0.0 --port 8080
 - إمكانية استيراد جدول يدوي لأوقات الصلاة.
 - قاعدة بيانات مدن ودول محلية بدون إنترنت.
 - تشغيل سهل عبر Docker مع حفظ الإعدادات والملفات الصوتية بشكل دائم.
+
+### لقطات الشاشة
+
+توضح هذه الصور أهم أقسام لوحة التحكم حتى يتمكن المستخدم من فهم الواجهة وطريقة العمل بسرعة قبل التثبيت.
+
+#### لوحة التحكم
+
+![Dashboard](assets/screenshots/dashboard.png)
+
+تعرض الحالة العامة للنظام، ووقت الجهاز، وحالة التسجيل في `SIP`، ومزامنة `NTP`، وموعد البث القادم، مع زر مباشر لاختبار البث.
+
+#### تسجيل SIP
+
+![SIP Registration](assets/screenshots/sip-registration.png)
+
+يتم من هذا القسم ضبط عنوان السنترال، ونوع النقل، وبيانات الحساب، وإعدادات إعادة الاتصال الخاصة بحساب `SIP`.
+
+#### الوجهات
+
+![Destinations](assets/screenshots/destinations.png)
+
+يتيح هذا القسم تحديد الامتدادات أو مجموعات النداء التي سيصلها الأذان، مع ضبط أسلوب الاتصال التسلسلي أو المتوازي.
+
+#### الجدول
+
+![Schedule](assets/screenshots/schedule.png)
+
+يمكنك هنا اختيار مصدر أوقات الصلاة وطريقة الحساب والمذهب والضبط الدقيق لكل صلاة، مع دعم بث الإقامة الاختياري.
+
+#### الصوت والملفات
+
+![Audio & files](assets/screenshots/audio-files.png)
+
+من هذا القسم يتم رفع ملفات الأذان، وتوزيعها على الصلوات، وإدارة ملفات الإقامة ومستوى الصوت ومعدل التحويل.
+
+#### الترميزات
+
+![Codecs](assets/screenshots/codecs.png)
+
+يمكن التحكم في أولوية الترميزات الصوتية للحصول على أفضل توافق وجودة ممكنة عند الاتصال عبر `SIP`.
+
+#### الموقع
+
+![Location](assets/screenshots/location.png)
+
+يتيح لك تحديد الموقع عبر قاعدة بيانات المدن المدمجة دون إنترنت أو إدخال الإحداثيات والمنطقة الزمنية يدوياً.
+
+#### الوقت و NTP
+
+![Time & NTP](assets/screenshots/time-ntp.png)
+
+يعرض حالة مزامنة الوقت، والانحراف، وبيانات الخادم، ويتيح لك التحكم في إعدادات التحديث الزمني.
+
+#### السجلات
+
+![Logs](assets/screenshots/logs.png)
+
+يوفر عرضاً مباشراً لسجلات النظام لتتبع مشاكل التسجيل أو الجدولة أو التشغيل، مع إمكانية تصدير السجل الكامل.
+
+#### الحساب
+
+![Account](assets/screenshots/account.png)
+
+يمكن من خلاله إدارة حساب المدير، وتغيير اسم المستخدم وكلمة المرور، ومراجعة معلومات تسجيل الدخول.
 
 ### التوصية الأفضل للتشغيل
 
